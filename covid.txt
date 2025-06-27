@@ -1,0 +1,143 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input and XML language specification.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+You have access to:
+- user_input: This includes all necessary compartment types, groups, and flows.
+- language_specification: A skeleton XML that defines structure and format. Follow it exactly. Do not alter required lines.
+
+Your output must be:
+1. A valid and complete XML file in the format shown in the skeleton.
+2. Use only the information given in user_input.
+3. Output ONLY the XML file — no extra comments, notes, formatting, or text outside the XML.
+4. If something is unclear, use a placeholder value with a comment like <!-- missing info -->.
+5. The output will be parsed by a strict system. Maintain clean structure and formatting.
+
+********************************************************************************
+USER INPUT:
+I’m modeling COVID-19 dynamics with a detailed compartmental approach. The model starts with a Susceptible population, some of whom get exposed at rate β (contact transmission), while a fraction gets quarantined if detected early.
+
+Exposed individuals transition to a presymptomatic infectious stage at rate σ. Some are isolated if already under quarantine. Presymptomatic individuals can either develop symptoms (probability p_s) or recover directly if mild.
+
+Infectious compartments include:
+- Presymptomatic (Ip)
+- Mild/moderate (Imm)
+- Severe (Is)
+- Isolated versions of the above where applicable.
+
+Mild/moderate cases either recover at rate γ₁ or progress to more severe infection at rate γ₂. Severe infections may lead to hospitalization or ICU, with transitions at rates δ₁ and δ₂. ICU patients either recover (rate ρ) or die (rate μ).
+
+Hospital states include pre-ICU, post-ICU, and general admission. Isolation and quarantine modify transition dynamics but not the core disease path.
+
+I’m using average parameter estimates from early COVID studies:
+- β = 0.0276 (infection)
+- σ = 0.4 (incubation)
+- γ₁ = 0.167 (mild recovery)
+- γ₂ = 0.4 (moderate progression)
+- δ₁ = 0.087 (to ICU)
+- δ₂ = 0.1 (to recovery from hospital)
+- ρ = 0.048 (post-ICU recovery)
+- μ = 0.0095 (death from ICU)
+- p_s = 0.03 (symptom development)
+
+All flows should include these where applicable. Use comments if a rate is uncertain.
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+
+<!-- DO NOT ALTER THE ABOVE TWO LINES. They are system-required. If asked to return a SEIR model file, always include these two lines exactly as shown. --> 
+
+<!-- START YOUR CUSTOM MODEL BELOW -->
+
+  <!-- Compartment Template: Use the provided data to construct all required compartments with optional outgoingFlows -->
+
+  <compartments PrimaryName="here_goes_primaryName" SecondaryName="here_goes_secondaryName">
+  
+    <!-- PrimaryName: Represents the general type of the compartment (e.g., Susceptible, Infected, etc.)
+         SecondaryName: Distinguishes this compartment from others of the same type (e.g., by group, gender, or condition) -->
+
+    <!-- Optional: Add one or more outgoingFlows only if there are flows leading from this compartment to others.
+         Each outgoingFlow must include:
+         - rate (required): A numeric or symbolic expression (e.g., 0.03, alpha * beta)
+         - target (required): The SecondaryName of the target compartment
+         - description (optional): Explains the meaning of the transition -->
+
+    <outgoingFlows 
+      rate="here_goes_rate_value" 
+      target="here_goes_secondaryName_of_target_compartment" 
+      description="here_goes_description_of_this_particular_flow" />
+      
+  </compartments>
+
+  <!-- You may define multiple <compartments> like this based on your model's needs.
+       If a compartment has no outgoing flows, omit the <outgoingFlows> block and Only PrimaryName and SecondaryName are mandatory in that case. -->
+
+<!-- DO NOT ALTER THE LINE BELOW. It is system-required and must appear exactly as shown. -->
+</seir:SEIRModel>
+
+********************************************************************************
+
+********************************************************************************
+RESPONSE:
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+
+  <!-- Compartments and Flows Based on User Input -->
+
+  <!-- Susceptible Compartment -->
+  <compartments PrimaryName="Susceptible" SecondaryName="S">
+    <outgoingFlows rate="0.0276" target="E" description="Contact transmission to Exposed" />
+    <outgoingFlows rate="0.03" target="Q" description="Quarantined if detected early" />
+  </compartments>
+
+  <!-- Exposed Compartment -->
+  <compartments PrimaryName="Exposed" SecondaryName="E">
+    <outgoingFlows rate="0.4" target="Ip" description="Transition to Presymptomatic" />
+    <outgoingFlows rate="0.03" target="Q_E" description="Quarantined if detected early" />
+  </compartments>
+
+  <!-- Presymptomatic Compartment -->
+  <compartments PrimaryName="Infectious" SecondaryName="Ip">
+    <outgoingFlows rate="0.03" target="Imm" description="Develop symptoms (Mild/Moderate)" />
+    <outgoingFlows rate="0.97" target="R" description="Recover directly if mild" />
+    <outgoingFlows rate="0.03" target="Ip_isolated" description="Isolated if under quarantine" />
+  </compartments>
+
+  <!-- Mild/Moderate Compartment -->
+  <compartments PrimaryName="Infectious" SecondaryName="Imm">
+    <outgoingFlows rate="0.167" target="R" description="Recovery from mild infection" />
+    <outgoingFlows rate="0.4" target="Is" description="Progression to severe infection" />
+    <outgoingFlows rate="0.03" target="Imm_isolated" description="Isolated if under quarantine" />
+  </compartments>
+
+  <!-- Severe Compartment -->
+  <compartments PrimaryName="Infectious" SecondaryName="Is">
+    <outgoingFlows rate="0.087" target="ICU" description="Transition to ICU" />
+    <outgoingFlows rate="0.1" target="R" description="Recovery from hospital" />
+    <outgoingFlows rate="0.03" target="Is_isolated" description="Isolated if under quarantine" />
+  </compartments>
+
+  <!-- ICU Compartment -->
+  <compartments PrimaryName="Hospitalized" SecondaryName="ICU">
+    <outgoingFlows rate="0.048" target="R" description="Recovery from ICU" />
+    <outgoingFlows rate="0.0095" target="D" description="Death from ICU" />
+  </compartments>
+
+  <!-- Quarantined Compartments -->
+  <compartments PrimaryName="Quarantined" SecondaryName="Q" />
+  <compartments PrimaryName="Quarantined" SecondaryName="Q_E" />
+  <compartments PrimaryName="Isolated" SecondaryName="Ip_isolated" />
+  <compartments PrimaryName="Isolated" SecondaryName="Imm_isolated" />
+  <compartments PrimaryName="Isolated" SecondaryName="Is_isolated" />
+
+  <!-- Recovered Compartment -->
+  <compartments PrimaryName="Recovered" SecondaryName="R" />
+
+  <!-- Deceased Compartment -->
+  <compartments PrimaryName="Deceased" SecondaryName="D" />
+
+</seir:SEIRModel>

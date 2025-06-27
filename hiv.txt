@@ -1,0 +1,320 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input and XML language specification.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+You have access to:
+- user_input: This includes all necessary compartment types, groups, and flows.
+- language_specification: A skeleton XML that defines structure and format. Follow it exactly. Do not alter required lines.
+
+Your output must be:
+1. A valid and complete XML file in the format shown in the skeleton.
+2. Use only the information given in user_input.
+3. Output ONLY the XML file — no extra comments, notes, formatting, or text outside the XML.
+4. If something is unclear, use a placeholder value with a comment like <!-- missing info -->.
+5. The output will be parsed by a strict system. Maintain clean structure and formatting.
+
+********************************************************************************
+USER INPUT:
+[
+  {
+    "PrimaryName": "Recruitment",
+    "SecondaryName": "Homosexual Men",
+    "Flows": [
+      {
+        "rate": 12.7872,
+        "target_index": 3,
+        "description": "Ψ * θ * (1−γ)"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Recruitment",
+    "SecondaryName": "Women",
+    "Flows": [
+      {
+        "rate": 173.16,
+        "target_index": 4,
+        "description": "Ψ * (1−θ)"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Recruitment",
+    "SecondaryName": "Heterosexual Men",
+    "Flows": [
+      {
+        "rate": 147.0528,
+        "target_index": 5,
+        "description": "Ψ * θ * γ"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Susceptible",
+    "SecondaryName": "Homosexual Men",
+    "Flows": [
+      {
+        "rate": 0.09636,
+        "target_index": 6,
+        "description": "λh"
+      },
+      {
+        "rate": 0.0129,
+        "target_index": 12,
+        "description": "μ"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Susceptible",
+    "SecondaryName": "Women",
+    "Flows": [
+      {
+        "rate": 0.00001637,
+        "target_index": 7,
+        "description": "λhw"
+      },
+      {
+        "rate": 0.00001355,
+        "target_index": 7,
+        "description": "λm"
+      },
+      {
+        "rate": 0.0129,
+        "target_index": 12,
+        "description": "μ"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Susceptible",
+    "SecondaryName": "Heterosexual Men",
+    "Flows": [
+      {
+        "rate": 0.0000025,
+        "target_index": 8,
+        "description": "λw"
+      },
+      {
+        "rate": 0.00011368,
+        "target_index": 8,
+        "description": "λhm"
+      },
+      {
+        "rate": 0.0129,
+        "target_index": 12,
+        "description": "μ"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Untreated Infected",
+    "SecondaryName": "Homosexual Men",
+    "Flows": [
+      {
+        "rate": 0.0129,
+        "target_index": 12,
+        "description": "μ"
+      },
+      {
+        "rate": 0.29997,
+        "target_index": 9,
+        "description": "α * p"
+      },
+      {
+        "rate": 0.03333,
+        "target_index": 10,
+        "description": "α * (1-p)"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Untreated Infected",
+    "SecondaryName": "Women",
+    "Flows": [
+      {
+        "rate": 0.0129,
+        "target_index": 12
+      },
+      {
+        "rate": 0.29997,
+        "target_index": 9
+      },
+      {
+        "rate": 0.03333,
+        "target_index": 10
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Untreated Infected",
+    "SecondaryName": "Heterosexual Men",
+    "Flows": [
+      {
+        "rate": 0.0129,
+        "target_index": 12
+      },
+      {
+        "rate": 0.29997,
+        "target_index": 9
+      },
+      {
+        "rate": 0.03333,
+        "target_index": 10
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Treated with ART",
+    "SecondaryName": "",
+    "Flows": [
+      {
+        "rate": 0.018,
+        "target_index": 10,
+        "description": "δ"
+      },
+      {
+        "rate": 0.0129,
+        "target_index": 12,
+        "description": "μ"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "People living with AIDS",
+    "SecondaryName": "",
+    "Flows": [
+      {
+        "rate": 0.3333,
+        "target_index": 11,
+        "description": "d"
+      },
+      {
+        "rate": 0.0129,
+        "target_index": 12,
+        "description": "μ"
+      }
+    ]
+  },
+  {
+    "PrimaryName": "Death due to AIDS",
+    "SecondaryName": ""
+  },
+  {
+    "PrimaryName": "Natural Death",
+    "SecondaryName": ""
+  }
+]
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+
+<!-- DO NOT ALTER THE ABOVE TWO LINES. They are system-required. If asked to return a SEIR model file, always include these two lines exactly as shown. -->
+
+<!--
+  RULES FOR CONSTRUCTING THIS FILE:
+
+  1. You may ONLY define <compartments> with optional <outgoingFlows>. Nothing else (no <population>, <parameters>, etc.).
+  2. Each <compartments> block must include:
+      - PrimaryName: The general type of the compartment (e.g., Susceptible, Infected, etc.)
+      - SecondaryName: A specific group/label that makes this compartment unique among others of the same PrimaryName.That's why if there is no group compartment, then there is no need to write secondaryName parameter at all. 
+        NOTE: Each PrimaryName may be reused, but each (PrimaryName, SecondaryName) pair must be unique.
+  3. You may add zero or more <outgoingFlows> inside each <compartments> block.
+      - Each flow must contain:
+          • rate: A strictly numeric value(sometimes you need to get a numeric answer by solving provided equations using provided parameters).
+          • target: The **0-based index** of the destination compartment, in the format `//@compartments.X`, where X is the index.
+          • description: (optional) A plain-language explanation of the flow.
+      - You must **strictly maintain compartment order** because indexing depends on the order of declaration.
+      - A single flow must only target ONE compartment.
+  4. IMPORTANT: All `rate` values MUST be evaluated and written as floating-point numbers (e.g., 0.0375). NEVER leave them as symbolic expressions (e.g., 0.44 * 7 * 79 / (2446 + 79)). You have all required values — calculate them.
+  4. DO NOT use any undefined keywords or fields like `.population`.
+  5. DO NOT include any comments unless necessary to indicate missing or ambiguous information.
+-->
+
+<!-- Begin your model definition below. Follow all rules strictly. -->
+
+<compartments PrimaryName="PrimaryNameHere" SecondaryName="SecondaryNameHere">
+  <outgoingFlows 
+    rate="SOME_NUMERIC_RATE" 
+    target="//@compartments.TARGET_INDEX_HERE" 
+    description="Optional description of the transition" />
+</compartments>
+
+<!-- Add more <compartments> as needed, making sure to follow indexing strictly. -->
+
+<!-- DO NOT ALTER THE LINE BELOW. It is system-required and must appear exactly as shown. -->
+</seir:SEIRModel>
+
+********************************************************************************
+
+********************************************************************************
+RESPONSE:
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+
+<compartments PrimaryName="Recruitment" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="12.7872" target="//@compartments.3" description="Ψ * θ * (1−γ)"/>
+</compartments>
+
+<compartments PrimaryName="Recruitment" SecondaryName="Women">
+  <outgoingFlows rate="173.16" target="//@compartments.4" description="Ψ * (1−θ)"/>
+</compartments>
+
+<compartments PrimaryName="Recruitment" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="147.0528" target="//@compartments.5" description="Ψ * θ * γ"/>
+</compartments>
+
+<compartments PrimaryName="Susceptible" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="0.09636" target="//@compartments.6" description="λh"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+</compartments>
+
+<compartments PrimaryName="Susceptible" SecondaryName="Women">
+  <outgoingFlows rate="0.00001637" target="//@compartments.7" description="λhw"/>
+  <outgoingFlows rate="0.00001355" target="//@compartments.7" description="λm"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+</compartments>
+
+<compartments PrimaryName="Susceptible" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="0.0000025" target="//@compartments.8" description="λw"/>
+  <outgoingFlows rate="0.00011368" target="//@compartments.8" description="λhm"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+</compartments>
+
+<compartments PrimaryName="Untreated Infected" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+  <outgoingFlows rate="0.29997" target="//@compartments.9" description="α * p"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.10" description="α * (1-p)"/>
+</compartments>
+
+<compartments PrimaryName="Untreated Infected" SecondaryName="Women">
+  <outgoingFlows rate="0.0129" target="//@compartments.12" />
+  <outgoingFlows rate="0.29997" target="//@compartments.9" />
+  <outgoingFlows rate="0.03333" target="//@compartments.10" />
+</compartments>
+
+<compartments PrimaryName="Untreated Infected" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="0.0129" target="//@compartments.12" />
+  <outgoingFlows rate="0.29997" target="//@compartments.9" />
+  <outgoingFlows rate="0.03333" target="//@compartments.10" />
+</compartments>
+
+<compartments PrimaryName="Treated with ART">
+  <outgoingFlows rate="0.018" target="//@compartments.10" description="δ"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+</compartments>
+
+<compartments PrimaryName="People living with AIDS">
+  <outgoingFlows rate="0.3333" target="//@compartments.11" description="d"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+</compartments>
+
+<compartments PrimaryName="Death due to AIDS"/>
+
+<compartments PrimaryName="Natural Death"/>
+
+</seir:SEIRModel>

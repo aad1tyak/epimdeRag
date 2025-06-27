@@ -1,0 +1,116 @@
+
+********************************************************************************
+PROMPT:
+You are responsible for generating a valid SEIR model XML file using:
+
+- model_diagram (image): This shows all compartments and directional flows.
+- user_input (text): Provides parameter values, population numbers, and formulas.
+- language_specification (text): Defines strict XML structure. Do not change required lines.
+
+Instructions:
+1. Extract compartments and transitions from the image (left to right, top-down if needed).
+2. Use `user_input` to fill rates, formulas, and initial values.
+3. Follow the XML structure exactly. No extra text or formatting.
+4. Use 0-based indexing for compartments in order of appearance.
+5. If any info is unclear, use `<!-- missing info -->` as placeholder.
+
+Only return the final XML file.
+
+********************************************************************************
+USER INPUT:
+No Parameters provided, use the provided image to get the useful informations.
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+
+<!-- DO NOT ALTER THE ABOVE TWO LINES. They are system-required. If asked to return a SEIR model file, always include these two lines exactly as shown. -->
+
+<!--
+  RULES FOR CONSTRUCTING THIS FILE:
+
+  1. You may ONLY define <compartments> with optional <outgoingFlows>. Nothing else (no <population>, <parameters>, etc.).
+  2. Each <compartments> block must include:
+      - PrimaryName: The general type of the compartment (e.g., Susceptible, Infected, etc.)
+      - SecondaryName: A specific group/label that makes this compartment unique among others of the same PrimaryName.That's why if there is no group compartment, then there is no need to write secondaryName parameter at all. 
+        NOTE: Each PrimaryName may be reused, but each (PrimaryName, SecondaryName) pair must be unique.
+  3. You may add zero or more <outgoingFlows> inside each <compartments> block.
+      - Each flow must contain:
+          • rate: A strictly numeric value(sometimes you need to get a numeric answer by solving provided equations using provided parameters).
+          • target: The **0-based index** of the destination compartment, in the format `//@compartments.X`, where X is the index.
+          • description: (optional) A plain-language explanation of the flow.
+      - You must **strictly maintain compartment order** because indexing depends on the order of declaration.
+      - A single flow must only target ONE compartment.
+  4. IMPORTANT: All `rate` values MUST be evaluated and written as floating-point numbers (e.g., 0.0375). NEVER leave them as symbolic expressions (e.g., 0.44 * 7 * 79 / (2446 + 79)). You have all required values — calculate them.
+  4. DO NOT use any undefined keywords or fields like `.population`.
+  5. DO NOT include any comments unless necessary to indicate missing or ambiguous information.
+-->
+
+<!-- Begin your model definition below. Follow all rules strictly. -->
+
+<compartments PrimaryName="PrimaryNameHere" SecondaryName="SecondaryNameHere">
+  <outgoingFlows 
+    rate="SOME_NUMERIC_RATE" 
+    target="//@compartments.TARGET_INDEX_HERE" 
+    description="Optional description of the transition" />
+</compartments>
+
+<!-- Add more <compartments> as needed, making sure to follow indexing strictly. -->
+
+<!-- DO NOT ALTER THE LINE BELOW. It is system-required and must appear exactly as shown. -->
+</seir:SEIRModel>
+
+********************************************************************************
+RESPONSE:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+<compartments PrimaryName="Recruitment" SecondaryName="Women">
+  <outgoingFlows rate="173.16" target="//@compartments.1" description="Recruitment of women"/>
+</compartments>
+<compartments PrimaryName="Susceptible" SecondaryName="Women">
+  <outgoingFlows rate="1.637E-5" target="//@compartments.2" description="Women becoming infected"/>
+  <outgoingFlows rate="1.355E-5" target="//@compartments.2" description="Women becoming infected"/>
+</compartments>
+<compartments PrimaryName="Untreated" SecondaryName="Infected Women">
+  <outgoingFlows rate="0.29997" target="//@compartments.4" description="Untreated infected women starting ART"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.6" description="Untreated infected women dying"/>
+</compartments>
+<compartments PrimaryName="Recruitment" SecondaryName="Heterosexual">
+  <outgoingFlows rate="147.0528" target="//@compartments.4" description="Recruitment of heterosexuals"/>
+</compartments>
+<compartments PrimaryName="Susceptible" SecondaryName="Heterosexual">
+  <outgoingFlows rate="2.5E-6" target="//@compartments.5" description="Heterosexuals becoming infected"/>
+  <outgoingFlows rate="1.1368E-4" target="//@compartments.5" description="Heterosexuals becoming infected"/>
+</compartments>
+<compartments PrimaryName="Untreated" SecondaryName="Infected Heterosexual">
+  <outgoingFlows rate="0.29997" target="//@compartments.4" description="Untreated infected heterosexuals starting ART"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.6" description="Untreated infected heterosexuals dying"/>
+</compartments>
+<compartments PrimaryName="Recruitment" SecondaryName="Homosexual">
+  <outgoingFlows rate="12.7872" target="//@compartments.7" description="Recruitment of homosexuals"/>
+</compartments>
+<compartments PrimaryName="Susceptible" SecondaryName="Homosexual">
+  <outgoingFlows rate="0.09636" target="//@compartments.8" description="Homosexuals becoming infected"/>
+</compartments>
+<compartments PrimaryName="Untreated" SecondaryName="Infected Homosexual">
+  <outgoingFlows rate="0.29997" target="//@compartments.4" description="Untreated infected homosexuals starting ART"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.6" description="Untreated infected homosexuals dying"/>
+</compartments>
+<compartments PrimaryName="Treated with" SecondaryName="ART">
+  <outgoingFlows rate="0.018" target="//@compartments.9" description="People living with HIV"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.6" description="People on ART dying"/>
+</compartments>
+<compartments PrimaryName="People" SecondaryName="living with HIV">
+  <outgoingFlows rate="0.3333" target="//@compartments.10" description="Death due to AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.11" description="Natural death"/>
+
+</compartments>
+<compartments PrimaryName="Death due" SecondaryName="to AIDS">
+  <outgoingFlows rate="0.0129" target="//@compartments.11" description="Natural death"/>
+</compartments>
+<compartments PrimaryName="Natural" SecondaryName="Death">
+</compartments>
+</seir:SEIRModel>
+```
