@@ -17,196 +17,103 @@ Your output must be:
 
 ********************************************************************************
 USER INPUT:
-[
-  {
-    "PrimaryName": "Recruitment",
-    "SecondaryName": "Homosexual Men",
-    "Flows": [
-      {
-        "rate": 12.7872,
-        "target_index": 3,
-        "description": "Ψ * θ * (1−γ)"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Recruitment",
-    "SecondaryName": "Women",
-    "Flows": [
-      {
-        "rate": 173.16,
-        "target_index": 4,
-        "description": "Ψ * (1−θ)"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Recruitment",
-    "SecondaryName": "Heterosexual Men",
-    "Flows": [
-      {
-        "rate": 147.0528,
-        "target_index": 5,
-        "description": "Ψ * θ * γ"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Susceptible",
-    "SecondaryName": "Homosexual Men",
-    "Flows": [
-      {
-        "rate": 0.09636,
-        "target_index": 6,
-        "description": "λh"
-      },
-      {
-        "rate": 0.0129,
-        "target_index": 12,
-        "description": "μ"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Susceptible",
-    "SecondaryName": "Women",
-    "Flows": [
-      {
-        "rate": 0.00001637,
-        "target_index": 7,
-        "description": "λhw"
-      },
-      {
-        "rate": 0.00001355,
-        "target_index": 7,
-        "description": "λm"
-      },
-      {
-        "rate": 0.0129,
-        "target_index": 12,
-        "description": "μ"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Susceptible",
-    "SecondaryName": "Heterosexual Men",
-    "Flows": [
-      {
-        "rate": 0.0000025,
-        "target_index": 8,
-        "description": "λw"
-      },
-      {
-        "rate": 0.00011368,
-        "target_index": 8,
-        "description": "λhm"
-      },
-      {
-        "rate": 0.0129,
-        "target_index": 12,
-        "description": "μ"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Untreated Infected",
-    "SecondaryName": "Homosexual Men",
-    "Flows": [
-      {
-        "rate": 0.0129,
-        "target_index": 12,
-        "description": "μ"
-      },
-      {
-        "rate": 0.29997,
-        "target_index": 9,
-        "description": "α * p"
-      },
-      {
-        "rate": 0.03333,
-        "target_index": 10,
-        "description": "α * (1-p)"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Untreated Infected",
-    "SecondaryName": "Women",
-    "Flows": [
-      {
-        "rate": 0.0129,
-        "target_index": 12
-      },
-      {
-        "rate": 0.29997,
-        "target_index": 9
-      },
-      {
-        "rate": 0.03333,
-        "target_index": 10
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Untreated Infected",
-    "SecondaryName": "Heterosexual Men",
-    "Flows": [
-      {
-        "rate": 0.0129,
-        "target_index": 12
-      },
-      {
-        "rate": 0.29997,
-        "target_index": 9
-      },
-      {
-        "rate": 0.03333,
-        "target_index": 10
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Treated with ART",
-    "SecondaryName": "",
-    "Flows": [
-      {
-        "rate": 0.018,
-        "target_index": 10,
-        "description": "δ"
-      },
-      {
-        "rate": 0.0129,
-        "target_index": 12,
-        "description": "μ"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "People living with AIDS",
-    "SecondaryName": "",
-    "Flows": [
-      {
-        "rate": 0.3333,
-        "target_index": 11,
-        "description": "d"
-      },
-      {
-        "rate": 0.0129,
-        "target_index": 12,
-        "description": "μ"
-      }
-    ]
-  },
-  {
-    "PrimaryName": "Death due to AIDS",
-    "SecondaryName": ""
-  },
-  {
-    "PrimaryName": "Natural Death",
-    "SecondaryName": ""
-  }
-]
+[{'compartment_index': 0,
+  'PrimaryName': 'Recruitment',
+  'SecondaryName': 'Homosexual Men',
+  'outgoingFlows': [{'rate': '12.7872',
+    'description': '𝛹𝜃(1−𝛾)',
+    'target': '//@compartments.3'}]},
+ {'compartment_index': 1,
+  'PrimaryName': 'Recruitment',
+  'SecondaryName': 'Women',
+  'outgoingFlows': [{'rate': '173.16',
+    'description': '𝛹(1−𝜃)',
+    'target': '//@compartments.4'}]},
+ {'compartment_index': 2,
+  'PrimaryName': 'Recruitment',
+  'SecondaryName': 'Heterosexual Men',
+  'outgoingFlows': [{'rate': '147.0528',
+    'description': '𝛹𝜃𝛾',
+    'target': '//@compartments.5'}]},
+ {'compartment_index': 3,
+  'PrimaryName': 'Susceptible',
+  'SecondaryName': 'Homosexual Men',
+  'outgoingFlows': [{'rate': '0.09636',
+    'description': 'λh',
+    'target': '//@compartments.6'},
+   {'rate': '0.0129', 'description': 'μ', 'target': '//@compartments.12'}]},
+ {'compartment_index': 4,
+  'PrimaryName': 'Susceptible',
+  'SecondaryName': 'Women',
+  'outgoingFlows': [{'rate': '1.637E-5',
+    'description': 'λhw (From Homosexual Man) ',
+    'target': '//@compartments.7'},
+   {'rate': '1.355E-5',
+    'description': 'λm (Form Woman)',
+    'target': '//@compartments.7'},
+   {'rate': '0.0129', 'description': 'μ ', 'target': '//@compartments.12'}]},
+ {'compartment_index': 5,
+  'PrimaryName': 'Susceptible',
+  'SecondaryName': 'Heterosexual Men',
+  'outgoingFlows': [{'rate': '2.5E-6',
+    'description': 'λw (From Heterosexual Man)',
+    'target': '//@compartments.8'},
+   {'rate': '1.1368E-4',
+    'description': 'λhm (From Homosexual Man)',
+    'target': '//@compartments.8'},
+   {'rate': '0.0129', 'description': 'μ', 'target': '//@compartments.12'}]},
+ {'compartment_index': 6,
+  'PrimaryName': 'Untreated Infected',
+  'SecondaryName': 'Homosexual Men',
+  'outgoingFlows': [{'rate': '0.0129',
+    'description': 'μ',
+    'target': '//@compartments.12'},
+   {'rate': '0.29997', 'description': 'α * p', 'target': '//@compartments.9'},
+   {'rate': '0.03333',
+    'description': '1-p * α',
+    'target': '//@compartments.10'}]},
+ {'compartment_index': 7,
+  'PrimaryName': 'Untreated Infected',
+  'SecondaryName': 'Women',
+  'outgoingFlows': [{'rate': '0.0129',
+    'description': 'μ',
+    'target': '//@compartments.12'},
+   {'rate': '0.29997', 'description': 'p * α', 'target': '//@compartments.9'},
+   {'rate': '0.03333',
+    'description': 'α * 1-p',
+    'target': '//@compartments.10'}]},
+ {'compartment_index': 8,
+  'PrimaryName': 'Untreated Infected',
+  'SecondaryName': 'Heterosexual Men',
+  'outgoingFlows': [{'rate': '0.0129',
+    'description': 'μ',
+    'target': '//@compartments.12'},
+   {'rate': '0.29997', 'description': 'p * α', 'target': '//@compartments.9'},
+   {'rate': '0.03333',
+    'description': '1-p * α',
+    'target': '//@compartments.10'}]},
+ {'compartment_index': 9,
+  'PrimaryName': 'Treated with ART',
+  'SecondaryName': '',
+  'outgoingFlows': [{'rate': '0.018',
+    'description': 'δ',
+    'target': '//@compartments.10'},
+   {'rate': '0.0129', 'description': 'μ', 'target': '//@compartments.12'}]},
+ {'compartment_index': 10,
+  'PrimaryName': 'People living with AIDS',
+  'SecondaryName': '',
+  'outgoingFlows': [{'rate': '0.3333',
+    'description': 'd',
+    'target': '//@compartments.11'},
+   {'rate': '0.0129', 'description': 'μ', 'target': '//@compartments.12'}]},
+ {'compartment_index': 11,
+  'PrimaryName': 'Death due to AIDS',
+  'SecondaryName': '',
+  'outgoingFlows': []},
+ {'compartment_index': 12,
+  'PrimaryName': 'Natural Death',
+  'SecondaryName': '',
+  'outgoingFlows': []}]
 
 ********************************************************************************
 LANGUAGE SPECIFICATION:
@@ -257,64 +164,62 @@ RESPONSE:
 <seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
 
 <compartments PrimaryName="Recruitment" SecondaryName="Homosexual Men">
-  <outgoingFlows rate="12.7872" target="//@compartments.3" description="Ψ * θ * (1−γ)"/>
+  <outgoingFlows rate="12.7872" target="//@compartments.3" description="𝛹𝜃(1−𝛾)"/>
 </compartments>
-
 <compartments PrimaryName="Recruitment" SecondaryName="Women">
-  <outgoingFlows rate="173.16" target="//@compartments.4" description="Ψ * (1−θ)"/>
+  <outgoingFlows rate="173.16" target="//@compartments.4" description="𝛹(1−𝜃)"/>
 </compartments>
-
 <compartments PrimaryName="Recruitment" SecondaryName="Heterosexual Men">
-  <outgoingFlows rate="147.0528" target="//@compartments.5" description="Ψ * θ * γ"/>
+  <outgoingFlows rate="147.0528" target="//@compartments.5" description="𝛹𝜃𝛾"/>
 </compartments>
-
 <compartments PrimaryName="Susceptible" SecondaryName="Homosexual Men">
   <outgoingFlows rate="0.09636" target="//@compartments.6" description="λh"/>
   <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
 </compartments>
-
 <compartments PrimaryName="Susceptible" SecondaryName="Women">
-  <outgoingFlows rate="0.00001637" target="//@compartments.7" description="λhw"/>
-  <outgoingFlows rate="0.00001355" target="//@compartments.7" description="λm"/>
-  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+  <outgoingFlows rate="1.637E-5" target="//@compartments.7" description="λhw (From Homosexual Man) "/>
+  <outgoingFlows rate="1.355E-5" target="//@compartments.7" description="λm (Form Woman)"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ "/>
 </compartments>
-
 <compartments PrimaryName="Susceptible" SecondaryName="Heterosexual Men">
-  <outgoingFlows rate="0.0000025" target="//@compartments.8" description="λw"/>
-  <outgoingFlows rate="0.00011368" target="//@compartments.8" description="λhm"/>
+  <outgoingFlows rate="2.5E-6" target="//@compartments.8" description="λw (From Heterosexual Man)"/>
+  <outgoingFlows rate="1.1368E-4" target="//@compartments.8" description="λhm (From Homosexual Man)"/>
   <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
 </compartments>
-
 <compartments PrimaryName="Untreated Infected" SecondaryName="Homosexual Men">
   <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
   <outgoingFlows rate="0.29997" target="//@compartments.9" description="α * p"/>
-  <outgoingFlows rate="0.03333" target="//@compartments.10" description="α * (1-p)"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.10" description="1-p * α"/>
 </compartments>
-
 <compartments PrimaryName="Untreated Infected" SecondaryName="Women">
-  <outgoingFlows rate="0.0129" target="//@compartments.12" />
-  <outgoingFlows rate="0.29997" target="//@compartments.9" />
-  <outgoingFlows rate="0.03333" target="//@compartments.10" />
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+  <outgoingFlows rate="0.29997" target="//@compartments.9" description="p * α"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.10" description="α * 1-p"/>
 </compartments>
-
 <compartments PrimaryName="Untreated Infected" SecondaryName="Heterosexual Men">
-  <outgoingFlows rate="0.0129" target="//@compartments.12" />
-  <outgoingFlows rate="0.29997" target="//@compartments.9" />
-  <outgoingFlows rate="0.03333" target="//@compartments.10" />
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
+  <outgoingFlows rate="0.29997" target="//@compartments.9" description="p * α"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.10" description="1-p * α"/>
 </compartments>
-
-<compartments PrimaryName="Treated with ART">
+<compartments PrimaryName="Treated with ART" SecondaryName="">
   <outgoingFlows rate="0.018" target="//@compartments.10" description="δ"/>
   <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
 </compartments>
-
-<compartments PrimaryName="People living with AIDS">
+<compartments PrimaryName="People living with AIDS" SecondaryName="">
   <outgoingFlows rate="0.3333" target="//@compartments.11" description="d"/>
   <outgoingFlows rate="0.0129" target="//@compartments.12" description="μ"/>
 </compartments>
-
-<compartments PrimaryName="Death due to AIDS"/>
-
-<compartments PrimaryName="Natural Death"/>
-
+<compartments PrimaryName="Death due to AIDS" SecondaryName="">
+</compartments>
+<compartments PrimaryName="Natural Death" SecondaryName="">
+</compartments>
 </seir:SEIRModel>
+
+
+
+FINAL VERDICT:
+This SEIR model also perfectly matches the master model in:
+-Flow direction (from → to compartments)
+-Flow rate values
+
+The differences are only in the description text, which doesn’t affect the model’s computation or simulation behavior.

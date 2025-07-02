@@ -1,19 +1,20 @@
 
 ********************************************************************************
 PROMPT:
-You are now responsible for generating a complete SEIR model XML file using only the provided user input and XML language specification.
-Do not assume any external context or missing information. Everything you need has already been provided.
+You are responsible for generating a valid SEIR model XML file using:
 
-You have access to:
-- user_input: This includes all necessary compartment types, groups, and flows.
-- language_specification: A skeleton XML that defines structure and format. Follow it exactly. Do not alter required lines.
+- model_diagram (image): This shows all compartments and directional flows.
+- user_input (text): Provides parameter values, population numbers, and formulas.
+- language_specification (text): Defines strict XML structure. Do not change required lines.
 
-Your output must be:
-1. A valid and complete XML file in the format shown in the skeleton.
-2. Use only the information given in user_input.
-3. Output ONLY the XML file — no extra comments, notes, formatting, or text outside the XML.
-4. If something is unclear, use a placeholder value with a comment like <!-- missing info -->.
-5. The output will be parsed by a strict system. Maintain clean structure and formatting.
+Instructions:
+1. Extract compartments and transitions from the image (left to right, top-down if needed).
+2. Use `user_input` to fill rates, formulas, and initial values.
+3. Follow the XML structure exactly. No extra text or formatting.
+4. Use 0-based indexing for compartments in order of appearance.
+5. If any info is unclear, use `<!-- missing info -->` as placeholder.
+
+Only return the final XML file.
 
 ********************************************************************************
 USER INPUT:
@@ -82,7 +83,7 @@ LANGUAGE SPECIFICATION:
   1. You may ONLY define <compartments> with optional <outgoingFlows>. Nothing else (no <population>, <parameters>, etc.).
   2. Each <compartments> block must include:
       - PrimaryName: The general type of the compartment (e.g., Susceptible, Infected, etc.)
-      - SecondaryName: A specific group/label that makes this compartment unique among others of the same PrimaryName.That's why if there is no group compartment, then there is no need to write secondaryName and keep it empty string. 
+      - SecondaryName: A specific group/label that makes this compartment unique among others of the same PrimaryName.That's why if there is no group compartment, then there is no need to write secondaryName parameter at all. 
         NOTE: Each PrimaryName may be reused, but each (PrimaryName, SecondaryName) pair must be unique.
   3. You may add zero or more <outgoingFlows> inside each <compartments> block.
       - Each flow must contain:
@@ -111,57 +112,73 @@ LANGUAGE SPECIFICATION:
 </seir:SEIRModel>
 
 ********************************************************************************
-
-********************************************************************************
 RESPONSE:
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
-
-<compartments PrimaryName="Susceptible" SecondaryName="HomosexualMen">
-  <outgoingFlows rate="0.0000" target="//@compartments.1" description="Recruitment into Homosexual Men"/>
-  <outgoingFlows rate="0.8008" target="//@compartments.1" description="Infection from Homosexual Men"/>
-  <outgoingFlows rate="0.0036" target="//@compartments.2" description="Infection from Women"/>
-  <outgoingFlows rate="0.0058" target="//@compartments.3" description="Infection from Heterosexual Men"/>
-  <outgoingFlows rate="0.0129" target="//@compartments.14" description="Natural Death"/>
+<compartments PrimaryName="Recruitment" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="12.7872" target="//@compartments.1" description="Recruitment of homosexual men"/>
 </compartments>
-
+<compartments PrimaryName="Susceptible" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="0.09686" target="//@compartments.3" description="Homosexual men become infected"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of susceptible homosexual men"/>
+</compartments>
+<compartments PrimaryName="Recruitment" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="147.0528" target="//@compartments.4" description="Recruitment of heterosexual men"/>
+</compartments>
+<compartments PrimaryName="Susceptible" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="2.5E-6" target="//@compartments.5" description="Heterosexual men become infected"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of susceptible heterosexual men"/>
+</compartments>
+<compartments PrimaryName="Untreated Infected" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="0.29997" target="//@compartments.6" description="Homosexual men start ART"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of untreated infected homosexual men"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.7" description="Homosexual men develop AIDS"/>
+</compartments>
+<compartments PrimaryName="Untreated Infected" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="0.29997" target="//@compartments.6" description="Heterosexual men start ART"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of untreated infected heterosexual men"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.7" description="Heterosexual men develop AIDS"/>
+</compartments>
+<compartments PrimaryName="Treated with ART">
+  <outgoingFlows rate="0.018" target="//@compartments.7" description="Treated individuals develop AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of treated individuals"/>
+</compartments>
+<compartments PrimaryName="People living with AIDS">
+  <outgoingFlows rate="0.3333" target="//@compartments.8" description="Death due to AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of people with AIDS"/>
+</compartments>
+<compartments PrimaryName="Death due to AIDS"/>
+<compartments PrimaryName="Natural Death"/>
+<compartments PrimaryName="Recruitment" SecondaryName="Women">
+  <outgoingFlows rate="173.16" target="//@compartments.10" description="Recruitment of women"/>
+</compartments>
 <compartments PrimaryName="Susceptible" SecondaryName="Women">
-  <outgoingFlows rate="0.0000" target="//@compartments.2" description="Recruitment into Women"/>
-  <outgoingFlows rate="0.0276" target="//@compartments.1" description="Infection from Homosexual Men"/>
-  <outgoingFlows rate="0.0480" target="//@compartments.2" description="Infection from Women"/>
-  <outgoingFlows rate="0.0058" target="//@compartments.3" description="Infection from Heterosexual Men"/>
-  <outgoingFlows rate="0.0129" target="//@compartments.14" description="Natural Death"/>
+  <outgoingFlows rate="1.355E-5" target="//@compartments.11" description="Women become infected"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of susceptible women"/>
 </compartments>
-
-<compartments PrimaryName="Susceptible" SecondaryName="HeterosexualMen">
-  <outgoingFlows rate="0.0000" target="//@compartments.3" description="Recruitment into Heterosexual Men"/>
-  <outgoingFlows rate="0.0276" target="//@compartments.1" description="Infection from Homosexual Men"/>
-  <outgoingFlows rate="0.0480" target="//@compartments.2" description="Infection from Women"/>
-  <outgoingFlows rate="0.0058" target="//@compartments.3" description="Infection from Heterosexual Men"/>
-  <outgoingFlows rate="0.0129" target="//@compartments.14" description="Natural Death"/>
-</compartments>
-
-<compartments PrimaryName="UntreatedInfected" SecondaryName="">
-  <outgoingFlows rate="0.29997" target="//@compartments.4" description="Progression to Treatment"/>
-  <outgoingFlows rate="0.03333" target="//@compartments.5" description="Progression to AIDS"/>
-</compartments>
-
-<compartments PrimaryName="TreatedWithART" SecondaryName="">
-  <outgoingFlows rate="0.018" target="//@compartments.5" description="Progression to AIDS despite treatment"/>
-  <outgoingFlows rate="0.0129" target="//@compartments.14" description="Natural Death"/>
-</compartments>
-
-<compartments PrimaryName="PeopleLivingWithAIDS" SecondaryName="">
-  <outgoingFlows rate="0.3333" target="//@compartments.6" description="Death due to AIDS"/>
-  <outgoingFlows rate="0.0129" target="//@compartments.14" description="Natural Death"/>
-</compartments>
-
-<compartments PrimaryName="DeathDueToAIDS" SecondaryName="">
-  <!-- Terminal compartment, no outgoing flows -->
-</compartments>
-
-<compartments PrimaryName="NaturalDeath" SecondaryName="">
-  <!-- Terminal compartment, no outgoing flows -->
+<compartments PrimaryName="Untreated Infected" SecondaryName="Women">
+  <outgoingFlows rate="0.29997" target="//@compartments.6" description="Women start ART"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.9" description="Natural death of untreated infected women"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.7" description="Women develop AIDS"/>
 </compartments>
 
 </seir:SEIRModel>
+```
+
+
+FINAL VERDICT:
+This SEIR model does not match the master model.
+
+Key Differences:
+-Flow Target Mismatches:
+  Many compartment indices (like 10 → 10 or 11 → 11) are self-referencing, which is not valid in the master model.
+  Some transitions point to the wrong compartments (e.g., infected → AIDS, or susceptible → infected compartments not aligned with original).
+
+-Rate Inconsistencies:
+  0.09686 used for infection rate (should be 0.09636).
+  Flow to //@compartments.9 used for many death transitions — in the master, natural death is consistently //@compartments.12.
+
+-Structural Inaccuracies:
+  Women compartments are placed at the end instead of grouped early like in the master.
+  Some flows and compartments are misplaced or missing, especially for untreated infected categories per gender.

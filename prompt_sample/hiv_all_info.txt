@@ -1,0 +1,170 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input and XML language specification.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+You have access to:
+- user_input: This includes all necessary compartment types, groups, and flows.
+- language_specification: A skeleton XML that defines structure and format. Follow it exactly. Do not alter required lines.
+
+Your output must be:
+1. A valid and complete XML file in the format shown in the skeleton.
+2. Use only the information given in user_input.
+3. Output ONLY the XML file — no extra comments, notes, formatting, or text outside the XML.
+4. If something is unclear, use a placeholder value with a comment like <!-- missing info -->.
+5. The output will be parsed by a strict system. Maintain clean structure and formatting.
+
+********************************************************************************
+USER INPUT:
+Compartment Names with indexes:
+0. Recruitment (Homosexual Men)
+1. Recruitment (Women)
+2. Recruitment (Heterosexual Men)
+3. Susceptible (Homosexual Men)
+4. Susceptible (Women)
+5. Susceptible (Heterosexual Men)
+6. Untreated Infected (Homosexual Men)
+7. Untreated Infected (Women)
+8. Untreated Infected (Heterosexual Men)
+9. Treated with ART
+10. People living with AIDS
+11. Death due to AIDS
+12. Natural Death
+
+
+Flow direction and their parameters values:
+Recruitment → Susceptible (Homosexual Men): 333 * 0.48 * (1 - 0.92) = 12.7872
+Recruitment → Susceptible (Women): 333 * (1 - 0.48) = 173.16
+Recruitment → Susceptible (Heterosexual Men): 333 * 0.48 * 0.92 = 147.0528
+
+Susceptible (Homosexual Men) → Untreated Infected (Homosexual Men): λh = 0.44 * 7 * 79 / (2446 + 79) ≈ 0.09636
+Susceptible (Homosexual Men) → Natural Death: μ = 0.0129
+
+Susceptible (Women) → Untreated Infected (Women):  
+- λhw (from homosexual men) = 0.018 * 2 * 79 / (2446 + 171173 + 79 + 29) ≈ 1.637E-5  
+- λm (from women) = 0.02 * 4 * 6 / (189994 + 6) ≈ 1.355E-5  
+Susceptible (Women) → Natural Death: μ = 0.0129
+
+Susceptible (Heterosexual Men) → Untreated Infected (Heterosexual Men):  
+- λw (from heterosexual men) = 0.02 * 4 * 29 / (171173 + 29) ≈ 2.5E-6  
+- λhm (from homosexual men) = 0.25 * 1 * 79 / (2446 + 171173 + 79 + 29) ≈ 1.1368E-4  
+Susceptible (Heterosexual Men) → Natural Death: μ = 0.0129
+
+Untreated Infected → Treated with ART: α * p = 0.3333 * 0.9 = 0.29997  
+Untreated Infected → People living with AIDS: α * (1 - p) = 0.3333 * 0.1 = 0.03333  
+Untreated Infected → Natural Death: μ = 0.0129
+
+Treated with ART → People living with AIDS: δ = 0.018  
+Treated with ART → Natural Death: μ = 0.0129
+
+People living with AIDS → Death due to AIDS: d = 0.3333  
+People living with AIDS → Natural Death: μ = 0.0129
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+
+<!-- DO NOT ALTER THE ABOVE TWO LINES. They are system-required. If asked to return a SEIR model file, always include these two lines exactly as shown. -->
+
+<!--
+  RULES FOR CONSTRUCTING THIS FILE:
+
+  1. You may ONLY define <compartments> with optional <outgoingFlows>. Nothing else (no <population>, <parameters>, etc.).
+  2. Each <compartments> block must include:
+      - PrimaryName: The general type of the compartment (e.g., Susceptible, Infected, etc.)
+      - SecondaryName: A specific group/label that makes this compartment unique among others of the same PrimaryName.That's why if there is no group compartment, then there is no need to write secondaryName parameter at all. 
+        NOTE: Each PrimaryName may be reused, but each (PrimaryName, SecondaryName) pair must be unique.
+  3. You may add zero or more <outgoingFlows> inside each <compartments> block.
+      - Each flow must contain:
+          • rate: A strictly numeric value(sometimes you need to get a numeric answer by solving provided equations using provided parameters).
+          • target: The **0-based index** of the destination compartment, in the format `//@compartments.X`, where X is the index.
+          • description: (optional) A plain-language explanation of the flow.
+      - You must **strictly maintain compartment order** because indexing depends on the order of declaration.
+      - A single flow must only target ONE compartment.
+  4. IMPORTANT: All `rate` values MUST be evaluated and written as floating-point numbers (e.g., 0.0375). NEVER leave them as symbolic expressions (e.g., 0.44 * 7 * 79 / (2446 + 79)). You have all required values — calculate them.
+  4. DO NOT use any undefined keywords or fields like `.population`.
+  5. DO NOT include any comments unless necessary to indicate missing or ambiguous information.
+-->
+
+<!-- Begin your model definition below. Follow all rules strictly. -->
+
+<compartments PrimaryName="PrimaryNameHere" SecondaryName="SecondaryNameHere">
+  <outgoingFlows 
+    rate="SOME_NUMERIC_RATE" 
+    target="//@compartments.TARGET_INDEX_HERE" 
+    description="Optional description of the transition" />
+</compartments>
+
+<!-- Add more <compartments> as needed, making sure to follow indexing strictly. -->
+
+<!-- DO NOT ALTER THE LINE BELOW. It is system-required and must appear exactly as shown. -->
+</seir:SEIRModel>
+
+********************************************************************************
+
+********************************************************************************
+RESPONSE:
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+
+<compartments PrimaryName="Recruitment" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="12.7872" target="//@compartments.3" description="Recruitment to Susceptible (Homosexual Men)"/>
+</compartments>
+<compartments PrimaryName="Recruitment" SecondaryName="Women">
+  <outgoingFlows rate="173.16" target="//@compartments.4" description="Recruitment to Susceptible (Women)"/>
+</compartments>
+<compartments PrimaryName="Recruitment" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="147.0528" target="//@compartments.5" description="Recruitment to Susceptible (Heterosexual Men)"/>
+</compartments>
+<compartments PrimaryName="Susceptible" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="0.09636" target="//@compartments.6" description="Susceptible (Homosexual Men) to Untreated Infected (Homosexual Men)"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="Susceptible (Homosexual Men) to Natural Death"/>
+</compartments>
+<compartments PrimaryName="Susceptible" SecondaryName="Women">
+  <outgoingFlows rate="1.637E-5" target="//@compartments.7" description="Susceptible (Women) to Untreated Infected (Women) from Homosexual Men"/>
+  <outgoingFlows rate="1.355E-5" target="//@compartments.7" description="Susceptible (Women) to Untreated Infected (Women) from Women"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="Susceptible (Women) to Natural Death"/>
+</compartments>
+<compartments PrimaryName="Susceptible" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="2.5E-6" target="//@compartments.8" description="Susceptible (Heterosexual Men) to Untreated Infected (Heterosexual Men) from Heterosexual Men"/>
+  <outgoingFlows rate="1.1368E-4" target="//@compartments.8" description="Susceptible (Heterosexual Men) to Untreated Infected (Heterosexual Men) from Homosexual Men"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="Susceptible (Heterosexual Men) to Natural Death"/>
+</compartments>
+<compartments PrimaryName="Untreated Infected" SecondaryName="Homosexual Men">
+  <outgoingFlows rate="0.29997" target="//@compartments.9" description="Untreated Infected to Treated with ART"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.10" description="Untreated Infected to People living with AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="Untreated Infected to Natural Death"/>
+</compartments>
+<compartments PrimaryName="Untreated Infected" SecondaryName="Women">
+  <outgoingFlows rate="0.29997" target="//@compartments.9" description="Untreated Infected to Treated with ART"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.10" description="Untreated Infected to People living with AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="Untreated Infected to Natural Death"/>
+</compartments>
+<compartments PrimaryName="Untreated Infected" SecondaryName="Heterosexual Men">
+  <outgoingFlows rate="0.29997" target="//@compartments.9" description="Untreated Infected to Treated with ART"/>
+  <outgoingFlows rate="0.03333" target="//@compartments.10" description="Untreated Infected to People living with AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="Untreated Infected to Natural Death"/>
+</compartments>
+<compartments PrimaryName="Treated with ART">
+  <outgoingFlows rate="0.018" target="//@compartments.10" description="Treated with ART to People living with AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="Treated with ART to Natural Death"/>
+</compartments>
+<compartments PrimaryName="People living with AIDS">
+  <outgoingFlows rate="0.3333" target="//@compartments.11" description="People living with AIDS to Death due to AIDS"/>
+  <outgoingFlows rate="0.0129" target="//@compartments.12" description="People living with AIDS to Natural Death"/>
+</compartments>
+<compartments PrimaryName="Death due to AIDS"/>
+<compartments PrimaryName="Natural Death"/>
+</seir:SEIRModel>
+
+
+
+FINAL VERDICT:
+Yes, the provided SEIR model file matches the master model in terms of:
+-Flow directions (from/to compartments)
+-Rate values
+
+Even though the description text differs, the actual structure and parameter values are identical, meaning both models will produce the same results when run in a simulator. 
+
