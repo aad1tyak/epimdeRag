@@ -206,40 +206,6 @@ if success:
 else:
     print(f"Error: {output_path}")
 ```
-
-## 🔍 Quality Assurance
-
-### Automatic Validation
-
-The system includes multiple validation layers:
-
-1. **PDF Extraction Validation**: Ensures sufficient text was extracted
-2. **XML Structure Validation**: Verifies proper XML formatting
-3. **Rate Validation**: Ensures all rates are numeric values
-4. **Index Validation**: Confirms compartment references are valid
-5. **Error Recovery**: Automatic correction for common issues
-
-### Success Indicators
-
-Generated models are considered successful when they:
-- ✅ Parse as valid XML
-- ✅ Contain realistic epidemiological compartments
-- ✅ Have numeric rate values (not mathematical expressions)
-- ✅ Follow proper compartment indexing
-- ✅ Match the structure of training examples
-
-## 📈 Performance
-
-**Typical Processing Times:**
-- Small papers (10-20 pages): 30-60 seconds
-- Medium papers (20-50 pages): 1-2 minutes
-- Large papers (50+ pages): 2-3 minutes
-
-**Resource Usage:**
-- Memory: ~200MB during processing
-- API Calls: 1-2 per paper (depending on validation needs)
-- Storage: Minimal (only .seirmodel output files)
-
 ## 🧪 Testing
 
 ### Test with Sample Paper
