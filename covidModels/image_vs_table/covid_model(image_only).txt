@@ -1,0 +1,217 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input, image and language specification/metamodel of seirmodel.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+- model_diagram (image): This shows all compartments and directional flows.
+- user_input (text): Provides parameter values, population numbers, and formulas.
+- language_specification/metamodel (text): Make use of this file to understand the required XML structure and elements.
+
+Instructions:
+1. Extract compartments and transitions from the image (left to right, top-down if needed).
+2. Use `user_input` to fill rates, formulas, and initial values.
+3. Follow the XML structure exactly. No extra text or formatting.
+4. Use 0-based indexing for compartments in order of appearance.
+5. If any info is unclear, use `<!-- missing info -->` as placeholder.
+
+Only return the final XML file.
+
+********************************************************************************
+USER INPUT:
+No Parameters provided, use the provided image to get the useful informations.
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+{
+  "seirmodel_metamodel": {
+    "structure": {
+      "xml_declaration": {
+        "version": "1.0",
+        "encoding": "UTF-8"
+      },
+      "root_element": {
+        "tag": "seir:SEIRModel",
+        "attributes": {
+          "xmi:version": "2.0",
+          "xmlns:xmi": "http://www.omg.org/XMI",
+          "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+          "xmlns:seir": "http://example.com/seirmodel"
+        }
+      },
+      "compartments": {
+        "element": "compartments",
+        "required_attributes": ["PrimaryName"],
+        "optional_attributes": ["SecondaryName", "population"],
+        "child_elements": ["outgoingFlows"]
+      },
+      "outgoingFlows": {
+        "element": "outgoingFlows",
+        "required_attributes": ["rate", "target"],
+        "optional_attributes": ["description"],
+        "constraints": {
+          "rate": "Must be float/decimal value (Strictly avoid using any symbols). Compute a final float numeric value and not a equation. ",
+          "target": "Must be 0-based index in format '//@compartments.X'"
+        }
+      }
+    },
+    "compartment_types": {
+      "epidemiological_states": [
+        "Susceptible",
+        "Exposed",
+        "Infectious",
+        "Recovered",
+        "Deceased",
+        "Dead",
+        "Removed"
+      ],
+      "treatment_states": [
+        "Vaccinated",
+        "Treated",
+        "Hospitalized",
+        "Quarantined",
+        "Isolated"
+      ],
+      "demographic_states": [
+        "Recruitment",
+        "Birth",
+        "Immigration"
+      ],
+      "terminal_states": [
+        "Death",
+        "Natural Death",
+        "Death due to AIDS",
+        "Dead"
+      ],
+      "severity_modifiers": [
+        "Asymptomatic",
+        "Symptomatic",
+        "Mild",
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
+      "location_modifiers": [
+        "ICU",
+        "Hospital",
+        "Home",
+        "Community"
+      ]
+    },
+    "secondary_name_patterns": {
+      "demographic_groups": [
+        "Homosexual Men",
+        "Heterosexual Men",
+        "Women",
+        "Children",
+        "Adults",
+        "Elderly"
+      ],
+      "disease_progression": [
+        "presymptomatic",
+        "mild to moderate",
+        "severe",
+        "pre-ICU",
+        "post-ICU"
+      ],
+      "intervention_status": [
+        "isolated",
+        "quarantined",
+        "with ART",
+        "living with AIDS"
+      ],
+      "vaccination_status": [
+        "Vaccinated",
+        "Unvaccinated",
+        "First dose",
+        "Second dose"
+      ]
+    },
+    "flow_patterns": {
+      "common_transitions": [
+        "Susceptible → Exposed",
+        "Exposed → Infectious",
+        "Infectious → Recovered",
+        "Infectious → Dead",
+        "All non-terminal compartment → Natural Death"
+      ],
+      "rate_types": {
+        "transmission_rates": ["β * c * I / N", "λ", "force of infection", "contact-based rate"],
+        "progression_rates": ["σ", "γ", "α", "transition rate"],
+        "death_rates": ["μ", "d", "mortality rate"],
+        "recovery_rates": ["γ", "recovery rate"],
+        "birth_rates": ["Ψ", "birth rate", "recruitment rate"]
+      }
+    },
+    "validation_rules": {
+      "Inflow": "The inflow to a compartment which doesn't have a source, example Recuirment or Birth etc.. are not supported by our model so you need to skip them or flag a error in the comment",
+      "compartment_uniqueness": "Each (PrimaryName, SecondaryName) pair must be unique",
+      "index_consistency": "Target indices must reference existing compartments",
+      "rate_format": "All rates must be numeric (Strictly avoid using any symbols). Compute a final float numeric value and not a equation.",
+      "terminal_compartments": "Terminal compartments have no outgoing flows"
+    }
+  }
+}
+
+********************************************************************************
+RESPONSE:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Susceptible">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.1"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.4"/>
+  </compartments>
+  <compartments PrimaryName="Exposed" SecondaryName="">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.2"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.5"/>
+  </compartments>
+  <compartments PrimaryName="Exposed" SecondaryName="quarantined">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.5"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.6"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.7"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic, isolated">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.7"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.8"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.9"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.12"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.13"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.10"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe, isolated">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate, isolated">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.11"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.13"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="pre-ICU">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="Isolated">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.13"/>
+  </compartments>
+  <compartments PrimaryName="ICU">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.12"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="post-ICU">
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.12"/>
+    <outgoingFlows rate="<!-- missing info -->" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Recovered"/>
+  <compartments PrimaryName="Dead"/>
+</seir:SEIRModel>
+```

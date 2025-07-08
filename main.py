@@ -5,6 +5,8 @@ import google.generativeai as genai
 import PIL.Image
 
 
+
+
 try:
     # Load the API key from environment variables
     env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -18,37 +20,12 @@ model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 
 
-def generate_seirmodel(prompt: str, user_input: str, langSpecs_path: str, output_fileName: str) -> str: 
-    with open(langSpecs_path, "r", encoding="utf-8") as f:
-        lang_specs = f.read()
 
-    separator = "\n" + "*" * 80 + "\n"
-    final_prompt = (
-        f"{separator}"
-        f"PROMPT:\n{prompt.strip()}\n"
-        f"{separator}"
-        f"USER INPUT:\n{user_input.strip()}\n"
-        f"{separator}"
-        f"LANGUAGE SPECIFICATION:\n{lang_specs.strip()}\n"
-        f"{separator}"
-    )
 
-    response = model.generate_content(final_prompt)
 
-    
 
-    output = f"{final_prompt}{separator}RESPONSE:\n{response.text.strip()}\n"
 
-    # Ensure the output directory exists
-    output_dir = os.path.join(os.path.dirname(output_fileName), "prompt_sample")
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, os.path.basename(output_fileName))
-    with open(output_file, "w", encoding="utf-8") as tf:
-      tf.write(output)
-
-    return f"SEIR model successfully written to {output_fileName}"
-    
-def generate_seirmodel_from_image(prompt: str, image_path: str, user_input: str, langSpecs_path: str, output_fileName: str) -> str:
+def generate_seirmodel_from_image(image_path: str, user_input: str, langSpecs_path: str, output_fileName: str) -> str:
     """
     Generates a response from a multimodal prompt including text and an image,
     then saves the full interaction to a file.
@@ -61,33 +38,61 @@ def generate_seirmodel_from_image(prompt: str, image_path: str, user_input: str,
         # Load the image using the modern PIL library
         img = PIL.Image.open(image_path)
 
-    except FileNotFoundError as e:
-        return f"Error: A required file was not found - {e}"
-    except Exception as e:
-        return f"An unexpected error occurred while reading files: {e}"
+    except FileNotFoundError as err:
+        print(f"Error: A required file was not found - {err}")
+        return f"Error: A required file was not found - {err}"
+    except Exception as err:
+        print(f"An unexpected error occurred while reading files: {err}")
+        return f"An unexpected error occurred while reading files: {err}"
 
 
     print(f"Image loaded successfully from '{image_path}'.")
     # --- Construct the final prompt text ---
     separator = "\n" + "*" * 80 + "\n"
-    final_prompt_text = (
+
+
+    llm1_input = (
         f"{separator}"
-        f"PROMPT:\n{prompt.strip()}\n"
+        f"PROMPT: \n{LLM1_PROMPT}\n"
+        f"{separator}"
+        f"METAMODEL: \n{lang_specs}\n"
+        f"{separator}"
+        f"Data:\n{user_input}"
+    )
+
+    llm1 = model.generate_content([
+        img,                 # The image object
+        llm1_input.strip()  # The text part of the prompt
+    ]).text.strip()
+
+
+    llm2_input = (
+        f"{separator}"
+        f"PROMPT:\n{LLM2_PROMPT.strip()}\n"
         f"{separator}"
         f"USER INPUT:\n{user_input.strip()}\n"
         f"{separator}"
-        f"LANGUAGE SPECIFICATION:\n{lang_specs.strip()}\n"
+        f"STRUCTURALLY CORRECT SEIRMODEL FILE:\n{llm1.strip()}\n"
         f"{separator}"
     )
 
     # --- Call the modern API with a list of parts (image and text) ---
-    response = model.generate_content([
-        img,                 # The image object
-        final_prompt_text.strip()  # The text part of the prompt
-    ])
+    llm2 = model.generate_content(llm2_input.strip()).text.strip()
     
     # --- Format and save the output ---
-    output_content = f"{final_prompt_text}RESPONSE:\n{response.text.strip()}\n"
+    output_content =(
+        f"LLM1 PROMPT:\n{LLM1_PROMPT}"
+        f"{separator}"
+        f"METAMODEL, USER INPUT AND IMAGE"
+        f"{separator}"
+        f"LLM1 RESPONSE:\n {llm1}"
+        f"{separator}"
+        f"LLM2 PROMPT:\n{LLM2_PROMPT}"
+        f"{separator}"
+        f"USER INPUT:\n{user_input}"
+        f"{separator}"
+        f"LLM2'S RESPONSE:\n{llm2}"
+    )
 
     try:
         # Ensure the output directory exists
@@ -100,6 +105,11 @@ def generate_seirmodel_from_image(prompt: str, image_path: str, user_input: str,
         return f"Error writing to output file '{output_fileName}': {e}"
 
     return f"SEIR model successfully written to {output_fileName}"
+
+
+
+
+
 
 # Constants for prompts and file names
 EMPTY_PROMPT = "No Parameters provided, use the provided image to get the useful informations."
@@ -121,11 +131,12 @@ Your output must be:
 """
 
 PROMPT_WITH_IMAGE = """
-You are responsible for generating a valid SEIR model XML file using:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input, image and language specification/metamodel of seirmodel.
+Do not assume any external context or missing information. Everything you need has already been provided.
 
 - model_diagram (image): This shows all compartments and directional flows.
 - user_input (text): Provides parameter values, population numbers, and formulas.
-- language_specification (text): Defines strict XML structure. Do not change required lines.
+- language_specification/metamodel (text): Make use of this file to understand the required XML structure and elements.
 
 Instructions:
 1. Extract compartments and transitions from the image (left to right, top-down if needed).
@@ -137,7 +148,95 @@ Instructions:
 Only return the final XML file.
 """
 
+
+LLM1_PROMPT = """
+You are an expert in XML structure generation for epidemiological models.
+
+Your task is to generate a structurally correct SEIR model in XML format using the provided **model diagram (image)** and **language specification/metamodel**.
+
+You must:
+- Focus ONLY on generating compartment and flow structure.
+- DO NOT attempt to calculate or insert any numeric rate values.
+- Instead, use a placeholder `[[rate_missing]]` for all `rate` attributes that require computation later.
+- Use 0-based indexing for compartments in the order they appear (top-down, left-to-right).
+- Follow the metamodel strictly for element names, attributes, and nesting.
+- Include all compartments and their directional flows shown in the diagram.
+
+Inputs:
+- model_diagram (image): Shows compartments and directional transitions.
+- language_specification (text): Defines the structure and rules for valid SEIR XML.
+
+Output:
+- Only the final XML file. Do not include explanations or markdown formatting.
+- Ensure all required attributes are present and validate against the provided metamodel.
+"""
+
+LLM2_PROMPT = """
+You are an expert at interpreting epidemiological equations and inserting computed rates into XML model files.
+
+You are given:
+1. A partially completed SEIR XML file, where all rate fields are marked as [[rate_missing]].
+2. A user_input section that includes all relevant parameter values, formulas, and population data.
+
+YOUR TASK:
+1. Identify each [[rate_missing]] inside an <outgoingFlows> tag.
+2. Use the description and flow direction (source → target) to determine which rate formula applies.
+3. Compute the rate using the correct formula and values:
+  - For contact-based flows, convert to a rate using population values.
+  - Substitute variables directly from the data.
+  - Never assume missing values unless they are explicitly derivable.
+4. Before writing the rate, first add a detailed comment explaining your full reasoning.
+5. Then insert the final computed value as the rate.
+
+IMPORTANT RULES:
+- Do not round — use full numerical precision at all times.
+- Do not modify the XML structure or tags.
+- If a rate cannot be computed (due to missing data), leave a clear comment:
+    `<!-- missing due to undefined variable: βm -->`
+
+How to Write Reasoning (Baby-Step Style):
+  For each <outgoingFlows> you process:
+    First, add a full step-by-step comment above the rate:
+      - Use simple language, no skipped math
+      - Treat it like teaching someone new to equations
+      - Explain each substitution and operation clearly
+      - Then, insert the rate based on that computation.
+  Example:
+
+        <!-- We are using the formula: a × b × (c - 1)
+             Step 1: a = 2
+             Step 2: b = 3
+             Step 3: c = 4, so (c - 1) = 3
+             Step 4: Multiply: 2 × 3 = 6
+             Step 5: Then: 6 × 3 = 18
+             Therefore, the rate is 18 -->
+      <outgoingFlows rate="18" target="//@compartments.3">
+      </outgoingFlows>
+
+
+Final Note: Your only task is to calculate and insert correct rate values. Please Do not add, remove, or reorder compartments or flows. Also don't change the target parameter in any ongoingrate tag.
+"""
+
+
+PROMPT_EXTRACT_PARAMETERS = """
+You are an expert at extracting epidemiological model parameters from research data.
+Given the diagram, user-provided data, and metadata, extract a table of all parameters.
+
+Each parameter must include: 
+- Source compartment
+- Target compartment
+- Equation (if applicable)
+- Final value (if computable)
+- Comments (provide you reasoning in detail, why did you come up with this value.)\n\n
+- Respond ONLY with a description and a clear markdown table.
+Note that your input will be used to generate a SEIR model, however my platform doesnt support contact based flow so you need to calculate then as rate based (used the inital population value rather than function).
+Do not round any numerical values. Always show the full computed result with maximum precision.
+"""
+
+
 LANG_SPECS_FILENAME = "seirmodel_skeleton.txt"
+METAMODEL_FILENAME = "metamodel.txt"
+METAMODEL_SKELETON_FILENAME = "metamodel_skeleton_seirmodel.txt"
 
 
 #User Input
@@ -289,32 +388,49 @@ People living with AIDS → Natural Death: μ = 0.0129
 """
 
 hiv_imp_info_only = """
-We consider a population split into three risk groups: homosexual men, heterosexual men, and women. Each group starts in the "Susceptible" compartment and may transition to "Untreated Infected", then to "Treated with ART" or "People living with AIDS", and finally either to "Death due to AIDS" or "Natural Death".
-Note that 𝐵ℎ,ℎ⁢𝑤,ℎ⁢𝑚,𝑠 represents the product between the probability of contagion 𝛽ℎ,ℎ⁢𝑤,ℎ⁢𝑚,𝑠 and the rate of the number of sexual partners, 𝑐ℎ,ℎ⁢𝑤,ℎ⁢𝑚,𝑠.
-Recruitment into the population occurs at different rates:
-- Homosexual men: 𝛹 * 𝜃 * (1−𝛾)
-- Women: 𝛹 * (1−𝜃)
-- Heterosexual men: 𝛹 * 𝜃 * 𝛾
-
-Susceptible individuals become infected at different rates depending on exposure:
-- Homosexual men: λh = βh * ch * Ih/(Sh+Ih)
-- Women: λhw (from homosexual men) = βhw * chw * Ih/(Sh+ Sm + Ih + Im), λm (from women)  = βs * cs * Iw/(Sw + Iw)
-- Heterosexual men: λw (from heterosexual men) = βs * cs * Im/(Sm + Im), λhm (from homosexual men) = βhm * chm * Ih/(Sh+ Sm + Ih + Im)
-
-All individuals are subject to a natural death rate μ.
-
-The following compartments and their transition are not gender-specific but apply to all groups do not create seperate compartment for each gender just one and so no need to use secondary compartment:
-Untreated infected individuals progress to either:
-- Treatment: with rate α * p
-- AIDS: with rate (1 - p) * α
-
-Treated individuals may still progress to AIDS at rate δ or die naturally.
-
-People living with AIDS may:
-- Die due to AIDS at rate d
-- Die naturally at rate μ
+| Index | Compartment                        | Subgroup         |
+| ----- | ---------------------------------- | ---------------- |
+| 0     | Recruitment_HomosexualMen          | Homosexual Men   |
+| 1     | Recruitment_Women                  | Women            |
+| 2     | Recruitment_HeterosexualMen        | Heterosexual Men |
+| 3     | Susceptible_HomosexualMen          | Homosexual Men   |
+| 4     | Susceptible_Women                  | Women            |
+| 5     | Susceptible_HeterosexualMen        | Heterosexual Men |
+| 6     | UntreatedInfected_HomosexualMen    | Homosexual Men   |
+| 7     | UntreatedInfected_Women            | Women            |
+| 8     | UntreatedInfected_HeterosexualMen  | Heterosexual Men |
+| 9     | TreatedWithART                     | Shared           |
+| 10    | PeopleLivingWithAIDS               | Shared           |
+| 11    | DeathDueToAIDS                     | Terminal         |
+| 12    | NaturalDeath                       | Terminal         |
 
 
+| Flow (From → To)                                            | Rate Variable   |
+| ----------------------------------------------------------- | --------------- |
+| Recruitment_HomosexualMen → Susceptible_HomosexualMen       | Ψ × θ × (1 − γ) |
+| Recruitment_Women → Susceptible_Women                       | Ψ × (1 − θ)     |
+| Recruitment_HeterosexualMen → Susceptible_HeterosexualMen   | Ψ × θ × γ       |
+| Susceptible_HomosexualMen → UntreatedInfected_HomosexualMen  | λh              |
+| Susceptible_Women → UntreatedInfected_Women    (homosexual men and women)              | λhw         |
+| Susceptible_Women → UntreatedInfected_Women  (Heterosexual)                | λm         |
+| Susceptible_HeterosexualMen → UntreatedInfected_HeterosexualMen (homosexual men and heterosexual) | λhm         |
+| Susceptible_HeterosexualMen → UntreatedInfected_HeterosexualMen  (heterosexual) | λw      |
+| UntreatedInfected_HomosexualMen → TreatedWithART                          | α × p           |
+| UntreatedInfected_Women → TreatedWithART                          | α × p           |
+| UntreatedInfected_HeterosexualMen → TreatedWithART                          | α × p           |
+| UntreatedInfected_HomosexualMen → PeopleLivingWithAIDS                    | α × (1 − p)     |
+| UntreatedInfected_Women → PeopleLivingWithAIDS                    | α × (1 − p)     |
+| UntreatedInfected_HeterosexualMen → PeopleLivingWithAIDS                    | α × (1 − p)     |
+| TreatedWithART → PeopleLivingWithAIDS                       | δ               |
+| PeopleLivingWithAIDS → DeathDueToAIDS                       | d               |
+| All states → NaturalDeath                                   | μ               |
+
+lamda flow equations:
+λh = βh * ch * (Ih / (Sh + Ih))
+λhw = βhw * Chw * (Ih / (Sm + Sh + Im + Ih))
+λhm = βhm * Chm * (Ih / (Sm + Sh + Im + Ih))
+λm = βs * cs * (Iw / (Sw + Iw))
+λw = βs * cs * (Im / (Sm + Im)) 
 
 Data of all the parameters is as follows(only use the necceassary values):
 Ψ	333	
@@ -338,60 +454,83 @@ Populations parameters are(only use the necceassary values):
 Sℎ	=2⁢4⁢4⁢6,	𝐼ℎ	=7⁢9,	𝑆𝑤	=1⁢8⁢9⁢9⁢9⁢4,	𝐼𝑤	=6,
 𝑆𝑚	=1⁢7⁢1⁢1⁢7⁢3,	𝐼𝑚	=2⁢9,	𝑇	=1⁢0⁢7,	𝐴	=4⁢7.
 
+"""
 
-There are two terminal compartments: Death due to AIDS and Natural Death.
+covidModel = """
+| Index | Compartment Name                        |
+| ----- | --------------------------------------- |
+| 0     | Susceptible                             |
+| 1     | Exposed                                 |
+| 2     | Exposed (quarantined)                   |
+| 3     | Infectious (presymptomatic)             |
+| 4     | Infectious (presymptomatic, isolated)   |
+| 5     | Infectious (mild to moderate)           |
+| 6     | Infectious (severe)                     |
+| 7     | Infectious (mild to moderate, isolated) |
+| 8     | Infectious (severe, isolated)           |
+| 9     | Isolated                                |
+| 10    | Recovered                               |
+| 11    | Admitted to hospital                    |
+| 12    | Admitted to hospital (pre-ICU)          |
+| 13    | Admitted to hospital (post-ICU)         |
+| 14    | ICU                                     |
+| 15    | Dead                                    |
+
+| From → To                                      | Description                      | Rate / Parameter |
+| ---------------------------------------------- | -------------------------------- | ---------------- |
+| Susceptible → Exposed                          | Infection                        | 0.0276           |
+| Susceptible → Exposed (quarantined)            | Infection (quarantine pathway)   | 0.0031           |
+| Exposed → Infectious (presymptomatic)          | End of latency                   | 0.4              |
+| Exposed (quarantined) → Infectious (iso)       | End of latency (isolated)        | 0.4              |
+| Infectious (presymptomatic) → Mild/Mod         | Develops symptoms                | 0.97             |
+| Infectious (presymptomatic) → Severe           | Becomes severely ill             | 0.03             |
+| Infectious (presymp, isolated) → Mild/Mod, iso | Develops symptoms (in isolation) | 0.97             |
+| Infectious (presymp, isolated) → Severe, iso   | Becomes severe (in isolation)    | 0.03             |
+| Mild/Mod → Hospitalization                     | Worsening condition              | 0.4              |
+| Mild/Mod → Recovered                           | Recovery                         | 0.167            |
+| Severe → Hospital (general)                    | Hospital admission               | 0.167            |
+| Severe → Hospital (pre-ICU)                    | Critical admission               | 0.167            |
+| Mild/Mod, isolated → Recovered                 | Recovery (isolated)              | 0.167            |
+| Severe, isolated → Hospital (pre-ICU)          | Critical admission (isolated)    | 0.167            |
+| Severe, isolated → Hospital (general)          | Hospital admission (isolated)    | 0.167            |
+| Isolated → Recovered                           | Recovery from isolation          | 0.167            |
+| Hospital → Recovered                           | Recovered from care              | 0.1              |
+| Hospital (pre-ICU) → ICU                       | Worsens to ICU                   | 0.087            |
+| Hospital (post-ICU) → Recovered                | Recovered after ICU              | 0.048            |
+| ICU → Dead                                     | Death in ICU                     | 0.0095           |
+| ICU → Hospital (post-ICU)                      | Survived ICU                     | 0.038            |
+
+"""
+
+simpleModel_imp_info_only = """
+| Index | Primary Name    | Description                           |
+| ----- | --------------- | ------------------------------------- |
+| 0     | Susceptible (S) | Individuals who can be infected       |
+| 1     | Exposed (E)     | Infected but not yet infectious       |
+| 2     | Infectious (I)  | Capable of transmitting the infection |
+| 3     | Recovered (R)   | Immune but may lose immunity later    |
+
+
+| From → To   | Description             | Rate Expression / Parameter |
+| ----------- | ----------------------- | --------------------------- |
+| S → E       | Infection               | **βSI/N**                   |
+| E → I       | End of latency          | **σE**                      |
+| I → R       | Recovery                | **γI**                      |
+| R → S       | Loss of immunity        | **ωR**                      |
+| All → death | Background mortality    | **µ** for each compartment  |
+| I → null    | Infection-induced death | **αI**                      |
+| ∅ → S       | Birth into Susceptible  | **µN**                      |
+
+
+| Parameter | Meaning                                          | Value (from paper)                   |
+| --------- | ------------------------------------------------ | ------------------------------------ |
+| β         | Contact (transmission) rate                      | **0.21/day**                         |
+| γ         | Recovery rate (1/γ is infectious period)         | **1/14 days** → γ ≈ **0.0714/day**   |
+| σ         | Latency rate (1/σ is incubation period)          | **1/7 days** → σ ≈ **0.143/day**     |
+| ω         | Immunity loss rate (1/ω is duration of immunity) | **1/365 days** → ω ≈ **0.00274/day** |
+| µ         | Background birth/death rate                      | **1/76 years** → µ ≈ **3.6e-5/day**  |
+| α         | Infection-induced mortality rate                 | **0** (assumed zero for this model)  |
+
 """
 
 
-# LLM in action
-generate_seirmodel(
-  prompt=PROMPT_FOR_TEXT,
-  user_input=hiv_json,
-  langSpecs_path=LANG_SPECS_FILENAME,
-  output_fileName="hiv_json.txt"
-)
-time.sleep(20)
-
-generate_seirmodel(
-  prompt=PROMPT_FOR_TEXT,
-  user_input=hiv_all_info,
-  langSpecs_path=LANG_SPECS_FILENAME,
-  output_fileName="hiv_all_info.txt"
-)
-time.sleep(20)
-
-generate_seirmodel(
-  prompt=PROMPT_FOR_TEXT,
-  user_input=hiv_imp_info_only,
-  langSpecs_path=LANG_SPECS_FILENAME,
-  output_fileName="hiv_imp_info_only.txt"
-)
-
-time.sleep(20)  
-
-generate_seirmodel_from_image(
-  prompt=PROMPT_WITH_IMAGE,
-  image_path="hivModel(epimde).jpg",
-  user_input=hiv_imp_info_only,
-  langSpecs_path=LANG_SPECS_FILENAME,
-  output_fileName="hiv_image_with_table.txt"
-)
-time.sleep(20)
-
-generate_seirmodel_from_image(
-  prompt=PROMPT_WITH_IMAGE,
-  image_path="hivModel(epimde).jpg",
-  user_input=EMPTY_PROMPT,
-  langSpecs_path=LANG_SPECS_FILENAME,
-  output_fileName="hiv_only_image.txt"
-)
-
-time.sleep(20)
-
-generate_seirmodel_from_image(
-  prompt=PROMPT_WITH_IMAGE,
-  image_path="HIV(Unorganized).jpg",
-  user_input=hiv_imp_info_only,
-  langSpecs_path=LANG_SPECS_FILENAME,
-  output_fileName="hiv_img(unorganized).txt"
-)

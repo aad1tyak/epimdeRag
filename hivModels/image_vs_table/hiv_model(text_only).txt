@@ -1,0 +1,259 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input and XML language specification.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+You have access to:
+- user_input: This includes all necessary compartment types, groups, and flows.
+- language_specification: A skeleton XML that defines structure and format. Follow it exactly. Do not alter required lines.
+
+Your output must be:
+1. A valid and complete XML file in the format shown in the skeleton.
+2. Use only the information given in user_input.
+3. Output ONLY the XML file — no extra comments, notes, formatting, or text outside the XML.
+4. If something is unclear, use a placeholder value with a comment like <!-- missing info -->.
+5. The output will be parsed by a strict system. Maintain clean structure and formatting.
+
+********************************************************************************
+USER INPUT:
+| Index | Compartment                        | Subgroup         |
+| ----- | ---------------------------------- | ---------------- |
+| 0     | Recruitment_HomosexualMen          | Homosexual Men   |
+| 1     | Recruitment_Women                  | Women            |
+| 2     | Recruitment_HeterosexualMen        | Heterosexual Men |
+| 3     | Susceptible_HomosexualMen          | Homosexual Men   |
+| 4     | Susceptible_Women                  | Women            |
+| 5     | Susceptible_HeterosexualMen        | Heterosexual Men |
+| 6     | UntreatedInfected_HomosexualMen    | Homosexual Men   |
+| 7     | UntreatedInfected_Women            | Women            |
+| 8     | UntreatedInfected_HeterosexualMen  | Heterosexual Men |
+| 9     | TreatedWithART                     | Shared           |
+| 10    | PeopleLivingWithAIDS               | Shared           |
+| 11    | DeathDueToAIDS                     | Terminal         |
+| 12    | NaturalDeath                       | Terminal         |
+
+
+| Flow (From → To)                                            | Rate Variable   |
+| ----------------------------------------------------------- | --------------- |
+| Recruitment_HomosexualMen → Susceptible_HomosexualMen       | Ψ × θ × (1 − γ) |
+| Recruitment_Women → Susceptible_Women                       | Ψ × (1 − θ)     |
+| Recruitment_HeterosexualMen → Susceptible_HeterosexualMen   | Ψ × θ × γ       |
+| Susceptible_HomosexualMen → UntreatedInfected               | λh              |
+| Susceptible_Women → UntreatedInfected                       | λhw, λm         |
+| Susceptible_HeterosexualMen → UntreatedInfected             | λw, λhm         |
+| UntreatedInfected → TreatedWithART                          | α × p           |
+| UntreatedInfected → PeopleLivingWithAIDS                    | α × (1 − p)     |
+| TreatedWithART → PeopleLivingWithAIDS                       | δ               |
+| PeopleLivingWithAIDS → DeathDueToAIDS                       | d               |
+| All states → NaturalDeath                                   | μ               |
+
+Data of all the parameters is as follows(only use the necceassary values):
+Ψ	333	
+θ	0.48	
+γ	0.92	
+p	0.90	
+μ	0.0129	
+d	0.3333	
+δ	0.018	
+α	0.3333	
+βs	0.02	
+βh	0.44	
+βhw	0.018	
+βhm	0.25	
+cs	4	
+ch	7	
+Chw	2	
+Chm	1	
+
+Populations parameters are(only use the necceassary values):
+Sℎ	=2⁢4⁢4⁢6,	𝐼ℎ	=7⁢9,	𝑆𝑤	=1⁢8⁢9⁢9⁢9⁢4,	𝐼𝑤	=6,
+𝑆𝑚	=1⁢7⁢1⁢1⁢7⁢3,	𝐼𝑚	=2⁢9,	𝑇	=1⁢0⁢7,	𝐴	=4⁢7.
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+{
+  "seirmodel_metamodel": {
+    "structure": {
+      "xml_declaration": {
+        "version": "1.0",
+        "encoding": "UTF-8"
+      },
+      "root_element": {
+        "tag": "seir:SEIRModel",
+        "attributes": {
+          "xmi:version": "2.0",
+          "xmlns:xmi": "http://www.omg.org/XMI",
+          "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+          "xmlns:seir": "http://example.com/seirmodel"
+        }
+      },
+      "compartments": {
+        "element": "compartments",
+        "required_attributes": ["PrimaryName"],
+        "optional_attributes": ["SecondaryName", "population"],
+        "child_elements": ["outgoingFlows"]
+      },
+      "outgoingFlows": {
+        "element": "outgoingFlows",
+        "required_attributes": ["rate", "target"],
+        "optional_attributes": ["description"],
+        "constraints": {
+          "rate": "Must be float/decimal value (Strictly avoid using any symbols). Compute a final float numeric value and not a equation. ",
+          "target": "Must be 0-based index in format '//@compartments.X'"
+        }
+      }
+    },
+    "compartment_types": {
+      "epidemiological_states": [
+        "Susceptible",
+        "Exposed",
+        "Infectious",
+        "Recovered",
+        "Deceased",
+        "Dead",
+        "Removed"
+      ],
+      "treatment_states": [
+        "Vaccinated",
+        "Treated",
+        "Hospitalized",
+        "Quarantined",
+        "Isolated"
+      ],
+      "demographic_states": [
+        "Recruitment",
+        "Birth",
+        "Immigration"
+      ],
+      "terminal_states": [
+        "Death",
+        "Natural Death",
+        "Death due to AIDS",
+        "Dead"
+      ],
+      "severity_modifiers": [
+        "Asymptomatic",
+        "Symptomatic",
+        "Mild",
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
+      "location_modifiers": [
+        "ICU",
+        "Hospital",
+        "Home",
+        "Community"
+      ]
+    },
+    "secondary_name_patterns": {
+      "demographic_groups": [
+        "Homosexual Men",
+        "Heterosexual Men",
+        "Women",
+        "Children",
+        "Adults",
+        "Elderly"
+      ],
+      "disease_progression": [
+        "presymptomatic",
+        "mild to moderate",
+        "severe",
+        "pre-ICU",
+        "post-ICU"
+      ],
+      "intervention_status": [
+        "isolated",
+        "quarantined",
+        "with ART",
+        "living with AIDS"
+      ],
+      "vaccination_status": [
+        "Vaccinated",
+        "Unvaccinated",
+        "First dose",
+        "Second dose"
+      ]
+    },
+    "flow_patterns": {
+      "common_transitions": [
+        "Susceptible → Exposed",
+        "Exposed → Infectious",
+        "Infectious → Recovered",
+        "Infectious → Dead",
+        "All non-terminal compartment → Natural Death"
+      ],
+      "rate_types": {
+        "transmission_rates": ["β * c * I / N", "λ", "force of infection", "contact-based rate"],
+        "progression_rates": ["σ", "γ", "α", "transition rate"],
+        "death_rates": ["μ", "d", "mortality rate"],
+        "recovery_rates": ["γ", "recovery rate"],
+        "birth_rates": ["Ψ", "birth rate", "recruitment rate"]
+      }
+    },
+    "validation_rules": {
+      "Inflow": "The inflow to a compartment which doesn't have a source, example Recuirment or Birth etc.. are not supported by our model so you need to skip them or flag a error in the comment",
+      "compartment_uniqueness": "Each (PrimaryName, SecondaryName) pair must be unique",
+      "index_consistency": "Target indices must reference existing compartments",
+      "rate_format": "All rates must be numeric (Strictly avoid using any symbols). Compute a final float numeric value and not a equation.",
+      "terminal_compartments": "Terminal compartments have no outgoing flows"
+    }
+  }
+}
+
+********************************************************************************
+
+********************************************************************************
+RESPONSE:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Recruitment_HomosexualMen" SecondaryName="Homosexual Men" population="<!-- missing info -->">
+    <outgoingFlows rate="166.56" target="//@compartments.3"/>
+  </compartments>
+  <compartments PrimaryName="Recruitment_Women" SecondaryName="Women" population="<!-- missing info -->">
+    <outgoingFlows rate="200" target="//@compartments.4"/>
+  </compartments>
+  <compartments PrimaryName="Recruitment_HeterosexualMen" SecondaryName="Heterosexual Men" population="<!-- missing info -->">
+    <outgoingFlows rate="153.36" target="//@compartments.5"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_HomosexualMen" SecondaryName="Homosexual Men" population="2446">
+    <outgoingFlows rate="0.44" target="//@compartments.6"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_Women" SecondaryName="Women" population="189994">
+    <outgoingFlows rate="0.018" target="//@compartments.7"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_HeterosexualMen" SecondaryName="Heterosexual Men" population="171173">
+    <outgoingFlows rate="0.25" target="//@compartments.8"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_HomosexualMen" SecondaryName="Homosexual Men" population="79">
+    <outgoingFlows rate="0.29997" target="//@compartments.9"/>
+    <outgoingFlows rate="0.040003" target="//@compartments.10"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_Women" SecondaryName="Women" population="6">
+    <outgoingFlows rate="0.29997" target="//@compartments.9"/>
+    <outgoingFlows rate="0.040003" target="//@compartments.10"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_HeterosexualMen" SecondaryName="Heterosexual Men" population="29">
+    <outgoingFlows rate="0.29997" target="//@compartments.9"/>
+    <outgoingFlows rate="0.040003" target="//@compartments.10"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="TreatedWithART" SecondaryName="Shared" population="107">
+    <outgoingFlows rate="0.018" target="//@compartments.10"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="PeopleLivingWithAIDS" SecondaryName="Shared" population="47">
+    <outgoingFlows rate="0.3333" target="//@compartments.11"/>
+    <outgoingFlows rate="0.0129" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="DeathDueToAIDS" SecondaryName="Terminal" population="<!-- missing info -->"/>
+  <compartments PrimaryName="NaturalDeath" SecondaryName="Terminal" population="<!-- missing info -->"/>
+</seir:SEIRModel>
+```

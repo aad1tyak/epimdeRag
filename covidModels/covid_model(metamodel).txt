@@ -1,0 +1,253 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input, image and language specification/metamodel of seirmodel.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+- model_diagram (image): This shows all compartments and directional flows.
+- user_input (text): Provides parameter values, population numbers, and formulas.
+- language_specification/metamodel (text): Make use of this file to understand the required XML structure and elements.
+
+Instructions:
+1. Extract compartments and transitions from the image (left to right, top-down if needed).
+2. Use `user_input` to fill rates, formulas, and initial values.
+3. Follow the XML structure exactly. No extra text or formatting.
+4. Use 0-based indexing for compartments in order of appearance.
+5. If any info is unclear, use `<!-- missing info -->` as placeholder.
+
+Only return the final XML file.
+
+********************************************************************************
+USER INPUT:
+| Index | Compartment Name                        |
+| ----- | --------------------------------------- |
+| 0     | Susceptible                             |
+| 1     | Exposed                                 |
+| 2     | Exposed (quarantined)                   |
+| 3     | Infectious (presymptomatic)             |
+| 4     | Infectious (presymptomatic, isolated)   |
+| 5     | Infectious (mild to moderate)           |
+| 6     | Infectious (severe)                     |
+| 7     | Infectious (mild to moderate, isolated) |
+| 8     | Infectious (severe, isolated)           |
+| 9     | Isolated                                |
+| 10    | Recovered                               |
+| 11    | Admitted to hospital                    |
+| 12    | Admitted to hospital (pre-ICU)          |
+| 13    | Admitted to hospital (post-ICU)         |
+| 14    | ICU                                     |
+| 15    | Dead                                    |
+
+| From → To                                      | Description                      | Rate / Parameter |
+| ---------------------------------------------- | -------------------------------- | ---------------- |
+| Susceptible → Exposed                          | Infection                        | 0.0276           |
+| Susceptible → Exposed (quarantined)            | Infection (quarantine pathway)   | 0.0031           |
+| Exposed → Infectious (presymptomatic)          | End of latency                   | 0.4              |
+| Exposed (quarantined) → Infectious (iso)       | End of latency (isolated)        | 0.4              |
+| Infectious (presymptomatic) → Mild/Mod         | Develops symptoms                | 0.97             |
+| Infectious (presymptomatic) → Severe           | Becomes severely ill             | 0.03             |
+| Infectious (presymp, isolated) → Mild/Mod, iso | Develops symptoms (in isolation) | 0.97             |
+| Infectious (presymp, isolated) → Severe, iso   | Becomes severe (in isolation)    | 0.03             |
+| Mild/Mod → Hospitalization                     | Worsening condition              | 0.4              |
+| Mild/Mod → Recovered                           | Recovery                         | 0.167            |
+| Severe → Hospital (general)                    | Hospital admission               | 0.167            |
+| Severe → Hospital (pre-ICU)                    | Critical admission               | 0.167            |
+| Mild/Mod, isolated → Recovered                 | Recovery (isolated)              | 0.167            |
+| Severe, isolated → Hospital (pre-ICU)          | Critical admission (isolated)    | 0.167            |
+| Severe, isolated → Hospital (general)          | Hospital admission (isolated)    | 0.167            |
+| Isolated → Recovered                           | Recovery from isolation          | 0.167            |
+| Hospital → Recovered                           | Recovered from care              | 0.1              |
+| Hospital (pre-ICU) → ICU                       | Worsens to ICU                   | 0.087            |
+| Hospital (post-ICU) → Recovered                | Recovered after ICU              | 0.048            |
+| ICU → Dead                                     | Death in ICU                     | 0.0095           |
+| ICU → Hospital (post-ICU)                      | Survived ICU                     | 0.038            |
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+{
+  "seirmodel_metamodel": {
+    "structure": {
+      "xml_declaration": {
+        "version": "1.0",
+        "encoding": "UTF-8"
+      },
+      "root_element": {
+        "tag": "seir:SEIRModel",
+        "attributes": {
+          "xmi:version": "2.0",
+          "xmlns:xmi": "http://www.omg.org/XMI",
+          "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+          "xmlns:seir": "http://example.com/seirmodel"
+        }
+      },
+      "compartments": {
+        "element": "compartments",
+        "required_attributes": ["PrimaryName"],
+        "optional_attributes": ["SecondaryName", "population"],
+        "child_elements": ["outgoingFlows"]
+      },
+      "outgoingFlows": {
+        "element": "outgoingFlows",
+        "required_attributes": ["rate", "target"],
+        "optional_attributes": ["description"],
+        "constraints": {
+          "rate": "Must be numeric value (calculated, not symbolic)",
+          "target": "Must be 0-based index in format '//@compartments.X'"
+        }
+      }
+    },
+    "compartment_types": {
+      "epidemiological_states": [
+        "Susceptible",
+        "Exposed",
+        "Infectious",
+        "Recovered",
+        "Deceased",
+        "Dead",
+        "Removed"
+      ],
+      "treatment_states": [
+        "Vaccinated",
+        "Treated",
+        "Hospitalized",
+        "Quarantined",
+        "Isolated"
+      ],
+      "demographic_states": [
+        "Recruitment",
+        "Birth",
+        "Immigration"
+      ],
+      "terminal_states": [
+        "Death",
+        "Natural Death",
+        "Death due to AIDS",
+        "Dead"
+      ],
+      "severity_modifiers": [
+        "Asymptomatic",
+        "Symptomatic",
+        "Mild",
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
+      "location_modifiers": [
+        "ICU",
+        "Hospital",
+        "Home",
+        "Community"
+      ]
+    },
+    "secondary_name_patterns": {
+      "demographic_groups": [
+        "Homosexual Men",
+        "Heterosexual Men",
+        "Women",
+        "Children",
+        "Adults",
+        "Elderly"
+      ],
+      "disease_progression": [
+        "presymptomatic",
+        "mild to moderate",
+        "severe",
+        "pre-ICU",
+        "post-ICU"
+      ],
+      "intervention_status": [
+        "isolated",
+        "quarantined",
+        "with ART",
+        "living with AIDS"
+      ],
+      "vaccination_status": [
+        "Vaccinated",
+        "Unvaccinated",
+        "First dose",
+        "Second dose"
+      ]
+    },
+    "flow_patterns": {
+      "common_transitions": [
+        "Susceptible → Exposed",
+        "Exposed → Infectious",
+        "Infectious → Recovered",
+        "Infectious → Dead",
+        "Any → Natural Death"
+      ],
+      "rate_types": {
+        "transmission_rates": ["β", "λ", "force of infection"],
+        "progression_rates": ["σ", "γ", "α", "transition rate"],
+        "death_rates": ["μ", "d", "mortality rate"],
+        "recovery_rates": ["γ", "recovery rate"],
+        "birth_rates": ["Ψ", "birth rate", "recruitment rate"]
+      }
+    },
+    "validation_rules": {
+      "compartment_uniqueness": "Each (PrimaryName, SecondaryName) pair must be unique",
+      "index_consistency": "Target indices must reference existing compartments",
+      "rate_format": "All rates must be numeric (no symbolic expressions)",
+      "terminal_compartments": "Terminal compartments have no outgoing flows"
+    }
+  }
+}
+
+********************************************************************************
+RESPONSE:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Susceptible">
+    <outgoingFlows rate="0.0276" target="//@compartments.1"/>
+    <outgoingFlows rate="0.0031" target="//@compartments.2"/>
+  </compartments>
+  <compartments PrimaryName="Exposed">
+    <outgoingFlows rate="0.4" target="//@compartments.3"/>
+  </compartments>
+  <compartments PrimaryName="Exposed" SecondaryName="quarantined">
+    <outgoingFlows rate="0.4" target="//@compartments.4"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic">
+    <outgoingFlows rate="0.97" target="//@compartments.5"/>
+    <outgoingFlows rate="0.03" target="//@compartments.6"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic, isolated">
+    <outgoingFlows rate="0.97" target="//@compartments.7"/>
+    <outgoingFlows rate="0.03" target="//@compartments.8"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate">
+    <outgoingFlows rate="0.4" target="//@compartments.11"/>
+    <outgoingFlows rate="0.167" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe">
+    <outgoingFlows rate="0.167" target="//@compartments.11"/>
+    <outgoingFlows rate="0.167" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate, isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe, isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.12"/>
+    <outgoingFlows rate="0.167" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="Isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Recovered"/>
+  <compartments PrimaryName="Admitted to hospital">
+    <outgoingFlows rate="0.1" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="pre-ICU">
+    <outgoingFlows rate="0.087" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="post-ICU">
+    <outgoingFlows rate="0.048" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="ICU">
+    <outgoingFlows rate="0.0095" target="//@compartments.15"/>
+    <outgoingFlows rate="0.038" target="//@compartments.13"/>
+  </compartments>
+  <compartments PrimaryName="Dead"/>
+</seir:SEIRModel>
+```

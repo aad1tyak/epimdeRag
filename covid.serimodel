@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Susceptible">
+    <outgoingFlows rate="0.0276" target="//@compartments.1"/>
+    <outgoingFlows rate="0.0031" target="//@compartments.2"/>
+  </compartments>
+  <compartments PrimaryName="Exposed">
+    <outgoingFlows rate="0.4" target="//@compartments.3"/>
+  </compartments>
+  <compartments PrimaryName="Exposed" SecondaryName="quarantined">
+    <outgoingFlows rate="0.4" target="//@compartments.4"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic">
+    <outgoingFlows rate="0.97" target="//@compartments.5"/>
+    <outgoingFlows rate="0.03" target="//@compartments.6"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic, isolated">
+    <outgoingFlows rate="0.97" target="//@compartments.7"/>
+    <outgoingFlows rate="0.03" target="//@compartments.8"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate">
+    <outgoingFlows rate="0.4" target="//@compartments.11"/>
+    <outgoingFlows rate="0.167" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe">
+    <outgoingFlows rate="0.167" target="//@compartments.11"/>
+    <outgoingFlows rate="0.167" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate, isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe, isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.12"/>
+    <outgoingFlows rate="0.167" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="Isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Recovered"/>
+  <compartments PrimaryName="Admitted to hospital">
+    <outgoingFlows rate="0.1" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="pre-ICU">
+    <outgoingFlows rate="0.087" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="post-ICU">
+    <outgoingFlows rate="0.048" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="ICU">
+    <outgoingFlows rate="0.0095" target="//@compartments.15"/>
+    <outgoingFlows rate="0.038" target="//@compartments.13"/>
+  </compartments>
+  <compartments PrimaryName="Dead"/>
+</seir:SEIRModel>

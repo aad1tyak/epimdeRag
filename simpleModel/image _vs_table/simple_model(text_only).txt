@@ -1,0 +1,220 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input and XML language specification.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+You have access to:
+- user_input: This includes all necessary compartment types, groups, and flows.
+- language_specification: A skeleton XML that defines structure and format. Follow it exactly. Do not alter required lines.
+
+Your output must be:
+1. A valid and complete XML file in the format shown in the skeleton.
+2. Use only the information given in user_input.
+3. Output ONLY the XML file — no extra comments, notes, formatting, or text outside the XML.
+4. If something is unclear, use a placeholder value with a comment like <!-- missing info -->.
+5. The output will be parsed by a strict system. Maintain clean structure and formatting.
+
+********************************************************************************
+USER INPUT:
+| Index | Primary Name    | Description                           |
+| ----- | --------------- | ------------------------------------- |
+| 0     | Susceptible (S) | Individuals who can be infected       |
+| 1     | Exposed (E)     | Infected but not yet infectious       |
+| 2     | Infectious (I)  | Capable of transmitting the infection |
+| 3     | Recovered (R)   | Immune but may lose immunity later    |
+
+
+| From → To   | Description             | Rate Expression / Parameter |
+| ----------- | ----------------------- | --------------------------- |
+| S → E       | Infection               | **βSI/N**                   |
+| E → I       | End of latency          | **σE**                      |
+| I → R       | Recovery                | **γI**                      |
+| R → S       | Loss of immunity        | **ωR**                      |
+| All → death | Background mortality    | **µ** for each compartment  |
+| I → null    | Infection-induced death | **αI**                      |
+| ∅ → S       | Birth into Susceptible  | **µN**                      |
+
+
+| Parameter | Meaning                                          | Value (from paper)                   |
+| --------- | ------------------------------------------------ | ------------------------------------ |
+| β         | Contact (transmission) rate                      | **0.21/day**                         |
+| γ         | Recovery rate (1/γ is infectious period)         | **1/14 days** → γ ≈ **0.0714/day**   |
+| σ         | Latency rate (1/σ is incubation period)          | **1/7 days** → σ ≈ **0.143/day**     |
+| ω         | Immunity loss rate (1/ω is duration of immunity) | **1/365 days** → ω ≈ **0.00274/day** |
+| µ         | Background birth/death rate                      | **1/76 years** → µ ≈ **3.6e-5/day**  |
+| α         | Infection-induced mortality rate                 | **0** (assumed zero for this model)  |
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+{
+  "seirmodel_metamodel": {
+    "structure": {
+      "xml_declaration": {
+        "version": "1.0",
+        "encoding": "UTF-8"
+      },
+      "root_element": {
+        "tag": "seir:SEIRModel",
+        "attributes": {
+          "xmi:version": "2.0",
+          "xmlns:xmi": "http://www.omg.org/XMI",
+          "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+          "xmlns:seir": "http://example.com/seirmodel"
+        }
+      },
+      "compartments": {
+        "element": "compartments",
+        "required_attributes": ["PrimaryName"],
+        "optional_attributes": ["SecondaryName", "population"],
+        "child_elements": ["outgoingFlows"]
+      },
+      "outgoingFlows": {
+        "element": "outgoingFlows",
+        "required_attributes": ["rate", "target"],
+        "optional_attributes": ["description"],
+        "constraints": {
+          "rate": "Must be float/decimal value (Strictly avoid using any symbols). Compute a final float numeric value and not a equation. ",
+          "target": "Must be 0-based index in format '//@compartments.X'"
+        }
+      }
+    },
+    "compartment_types": {
+      "epidemiological_states": [
+        "Susceptible",
+        "Exposed",
+        "Infectious",
+        "Recovered",
+        "Deceased",
+        "Dead",
+        "Removed"
+      ],
+      "treatment_states": [
+        "Vaccinated",
+        "Treated",
+        "Hospitalized",
+        "Quarantined",
+        "Isolated"
+      ],
+      "demographic_states": [
+        "Recruitment",
+        "Birth",
+        "Immigration"
+      ],
+      "terminal_states": [
+        "Death",
+        "Natural Death",
+        "Death due to AIDS",
+        "Dead"
+      ],
+      "severity_modifiers": [
+        "Asymptomatic",
+        "Symptomatic",
+        "Mild",
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
+      "location_modifiers": [
+        "ICU",
+        "Hospital",
+        "Home",
+        "Community"
+      ]
+    },
+    "secondary_name_patterns": {
+      "demographic_groups": [
+        "Homosexual Men",
+        "Heterosexual Men",
+        "Women",
+        "Children",
+        "Adults",
+        "Elderly"
+      ],
+      "disease_progression": [
+        "presymptomatic",
+        "mild to moderate",
+        "severe",
+        "pre-ICU",
+        "post-ICU"
+      ],
+      "intervention_status": [
+        "isolated",
+        "quarantined",
+        "with ART",
+        "living with AIDS"
+      ],
+      "vaccination_status": [
+        "Vaccinated",
+        "Unvaccinated",
+        "First dose",
+        "Second dose"
+      ]
+    },
+    "flow_patterns": {
+      "common_transitions": [
+        "Susceptible → Exposed",
+        "Exposed → Infectious",
+        "Infectious → Recovered",
+        "Infectious → Dead",
+        "All non-terminal compartment → Natural Death"
+      ],
+      "rate_types": {
+        "transmission_rates": ["β * c * I / N", "λ", "force of infection", "contact-based rate"],
+        "progression_rates": ["σ", "γ", "α", "transition rate"],
+        "death_rates": ["μ", "d", "mortality rate"],
+        "recovery_rates": ["γ", "recovery rate"],
+        "birth_rates": ["Ψ", "birth rate", "recruitment rate"]
+      }
+    },
+    "validation_rules": {
+      "Inflow": "The inflow to a compartment which doesn't have a source, example Recuirment or Birth etc.. are not supported by our model so you need to skip them or flag a error in the comment",
+      "compartment_uniqueness": "Each (PrimaryName, SecondaryName) pair must be unique",
+      "index_consistency": "Target indices must reference existing compartments",
+      "rate_format": "All rates must be numeric (Strictly avoid using any symbols). Compute a final float numeric value and not a equation.",
+      "terminal_compartments": "Terminal compartments have no outgoing flows"
+    }
+  }
+}
+
+********************************************************************************
+
+********************************************************************************
+RESPONSE:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Susceptible">
+    <outgoingFlows rate="0.0000767" target="//@compartments.1"><!--0.21/day * 3.6e-5/day *  N/N-->
+      outgoingFlows>
+    <outgoingFlows rate="3.6e-05" target="//@compartments.4">
+      ion>
+    </outgoingFlows>
+  </compartments>
+  <compartments PrimaryName="Exposed">
+    <outgoingFlows rate="0.143" target="//@compartments.2">
+         </outgoingFlows>
+    <outgoingFlows rate="3.6e-05" target="//@compartments.4">
+      ion>
+    </outgoingFlows>
+  </compartments>
+  <compartments PrimaryName="Infectious">
+    <outgoingFlows rate="0.0714" target="//@compartments.3">
+    </outgoingFlows>
+    <outgoingFlows rate="3.6e-05" target="//@compartments.4">
+      <description>Background mortality</description>
+    </outgoingFlows>
+    <outgoingFlows rate="0.0" target="//@compartments.4">
+    </outgoingFlows>
+  </compartments>
+  <compartments PrimaryName="Recovered">
+    <outgoingFlows rate="0.00274" target="//@compartments.0">
+    </outgoingFlows>
+    <outgoingFlows rate="3.6e-05" target="//@compartments.4">
+    </outgoingFlows>
+  </compartments>
+  <compartments PrimaryName="Death">
+    <!--This is a terminal compartment-->
+  </compartments>
+</seir:SEIRModel>
+```

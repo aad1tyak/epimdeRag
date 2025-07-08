@@ -1,0 +1,232 @@
+
+********************************************************************************
+PROMPT:
+You are now responsible for generating a complete SEIR model XML file using only the provided user input, image and language specification/metamodel of seirmodel.
+Do not assume any external context or missing information. Everything you need has already been provided.
+
+- model_diagram (image): This shows all compartments and directional flows.
+- user_input (text): Provides parameter values, population numbers, and formulas.
+- language_specification/metamodel (text): Make use of this file to understand the required XML structure and elements.
+
+Instructions:
+1. Extract compartments and transitions from the image (left to right, top-down if needed).
+2. Use `user_input` to fill rates, formulas, and initial values.
+3. Follow the XML structure exactly. No extra text or formatting.
+4. Use 0-based indexing for compartments in order of appearance.
+5. If any info is unclear, use `<!-- missing info -->` as placeholder.
+
+Only return the final XML file.
+
+********************************************************************************
+USER INPUT:
+The provided data describes a compartmental epidemiological model, likely representing the progression of a disease (e.g., COVID-19) through various stages of infection and treatment. The model includes compartments representing different stages of infection severity, isolation status, and hospitalization.  The transition rates between compartments are provided as numerical values.  The table below summarizes the parameters.  Note that several parameters lack a formal equation as they are defined by their numerical transition rates.  Further research or context would be needed to derive more complex equations reflecting underlying epidemiological processes.
+
+| Parameter Name                       | Source Compartment                  | Target Compartment                       | Equation                     | Final Value | Units     | Comments                                                                                                                        |
+|---------------------------------------|--------------------------------------|-------------------------------------------|------------------------------|-------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------|
+| Infection Rate                       | Susceptible                           | Exposed                                 |                             | 0.0276      | /day      | Rate of infection from susceptible individuals                                                                                      |
+| Infection Rate (Quarantine)          | Susceptible                           | Exposed (quarantined)                   |                             | 0.0031      | /day      | Rate of infection with quarantine measures in place                                                                                |
+| End of Latency Rate                  | Exposed                               | Infectious (presymptomatic)             |                             | 0.4         | /day      | Rate at which exposed individuals become infectious (presymptomatic)                                                               |
+| End of Latency Rate (Isolated)       | Exposed (quarantined)                | Infectious (presymptomatic, isolated)   |                             | 0.4         | /day      | Rate at which exposed (quarantined) individuals become infectious (presymptomatic and isolated)                                    |
+| Symptom Development Rate             | Infectious (presymptomatic)           | Infectious (mild to moderate)           |                             | 0.97        | /day      | Proportion of presymptomatic individuals who develop mild to moderate symptoms                                                     |
+| Severe Illness Rate                  | Infectious (presymptomatic)           | Infectious (severe)                     |                             | 0.03        | /day      | Proportion of presymptomatic individuals who develop severe illness                                                                |
+| Symptom Development Rate (Isolated)  | Infectious (presymptomatic, isolated) | Infectious (mild to moderate, isolated) |                             | 0.97        | /day      | Proportion of isolated presymptomatic individuals who develop mild to moderate symptoms                                            |
+| Severe Illness Rate (Isolated)       | Infectious (presymptomatic, isolated) | Infectious (severe, isolated)           |                             | 0.03        | /day      | Proportion of isolated presymptomatic individuals who develop severe illness                                                        |
+| Hospitalization Rate (Mild/Mod)     | Infectious (mild to moderate)         | Admitted to hospital                    |                             | 0.4         | /day      | Rate of hospitalization from mild to moderate cases                                                                                |
+| Recovery Rate (Mild/Mod)            | Infectious (mild to moderate)         | Recovered                               |                             | 0.167       | /day      | Recovery rate from mild to moderate infection                                                                                     |
+| Hospitalization Rate (Severe)        | Infectious (severe)                   | Admitted to hospital (pre-ICU)          |                             | 0.167       | /day      | Rate of hospitalization for severe cases (potentially pre-ICU)                                                                 |
+| Hospitalization Rate (Severe, iso)   | Infectious (severe, isolated)         | Admitted to hospital (pre-ICU)          |                             | 0.167       | /day      | Rate of hospitalization for severe isolated cases (potentially pre-ICU)                                                          |
+| Recovery Rate (Mild/Mod, Isolated)  | Infectious (mild to moderate, isolated)| Recovered                               |                             | 0.167       | /day      | Recovery rate from isolated mild to moderate infection                                                                            |
+| Hospitalization Rate (Severe, iso)   | Infectious (severe, isolated)         | Admitted to hospital                    |                             | 0.167       | /day      | Rate of hospitalization for severe isolated cases                                                                                |
+| Recovery Rate (Isolated)            | Isolated                               | Recovered                               |                             | 0.167       | /day      | Recovery rate from isolation                                                                                                     |
+| Recovery Rate (Hospital)            | Admitted to hospital                  | Recovered                               |                             | 0.1         | /day      | Recovery rate from general hospital care                                                                                          |
+| ICU Admission Rate                  | Admitted to hospital (pre-ICU)        | ICU                                     |                             | 0.087       | /day      | Rate of ICU admission from general hospital care                                                                                  |
+| Recovery Rate (Post-ICU)            | Admitted to hospital (post-ICU)       | Recovered                               |                             | 0.048       | /day      | Recovery rate after ICU care                                                                                                    |
+| ICU Mortality Rate                   | ICU                                     | Dead                                    |                             | 0.0095      | /day      | Mortality rate within the ICU                                                                                                    |
+| ICU Recovery Rate                    | ICU                                     | Admitted to hospital (post-ICU)         |                             | 0.038       | /day      | Recovery rate from ICU care                                                                                                     |
+
+********************************************************************************
+LANGUAGE SPECIFICATION:
+{
+  "seirmodel_metamodel": {
+    "structure": {
+      "xml_declaration": {
+        "version": "1.0",
+        "encoding": "UTF-8"
+      },
+      "root_element": {
+        "tag": "seir:SEIRModel",
+        "attributes": {
+          "xmi:version": "2.0",
+          "xmlns:xmi": "http://www.omg.org/XMI",
+          "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+          "xmlns:seir": "http://example.com/seirmodel"
+        }
+      },
+      "compartments": {
+        "element": "compartments",
+        "required_attributes": ["PrimaryName"],
+        "optional_attributes": ["SecondaryName", "population"],
+        "child_elements": ["outgoingFlows"]
+      },
+      "outgoingFlows": {
+        "element": "outgoingFlows",
+        "required_attributes": ["rate", "target"],
+        "optional_attributes": ["description"],
+        "constraints": {
+          "rate": "Must be float/decimal value (Strictly avoid using any symbols). Compute a final float numeric value and not a equation. ",
+          "target": "Must be 0-based index in format '//@compartments.X'"
+        }
+      }
+    },
+    "compartment_types": {
+      "epidemiological_states": [
+        "Susceptible",
+        "Exposed",
+        "Infectious",
+        "Recovered",
+        "Deceased",
+        "Dead",
+        "Removed"
+      ],
+      "treatment_states": [
+        "Vaccinated",
+        "Treated",
+        "Hospitalized",
+        "Quarantined",
+        "Isolated"
+      ],
+      "demographic_states": [
+        "Recruitment",
+        "Birth",
+        "Immigration"
+      ],
+      "terminal_states": [
+        "Death",
+        "Natural Death",
+        "Death due to AIDS",
+        "Dead"
+      ],
+      "severity_modifiers": [
+        "Asymptomatic",
+        "Symptomatic",
+        "Mild",
+        "Moderate",
+        "Severe",
+        "Critical"
+      ],
+      "location_modifiers": [
+        "ICU",
+        "Hospital",
+        "Home",
+        "Community"
+      ]
+    },
+    "secondary_name_patterns": {
+      "demographic_groups": [
+        "Homosexual Men",
+        "Heterosexual Men",
+        "Women",
+        "Children",
+        "Adults",
+        "Elderly"
+      ],
+      "disease_progression": [
+        "presymptomatic",
+        "mild to moderate",
+        "severe",
+        "pre-ICU",
+        "post-ICU"
+      ],
+      "intervention_status": [
+        "isolated",
+        "quarantined",
+        "with ART",
+        "living with AIDS"
+      ],
+      "vaccination_status": [
+        "Vaccinated",
+        "Unvaccinated",
+        "First dose",
+        "Second dose"
+      ]
+    },
+    "flow_patterns": {
+      "common_transitions": [
+        "Susceptible → Exposed",
+        "Exposed → Infectious",
+        "Infectious → Recovered",
+        "Infectious → Dead",
+        "All non-terminal compartment → Natural Death"
+      ],
+      "rate_types": {
+        "transmission_rates": ["β * c * I / N", "λ", "force of infection", "contact-based rate"],
+        "progression_rates": ["σ", "γ", "α", "transition rate"],
+        "death_rates": ["μ", "d", "mortality rate"],
+        "recovery_rates": ["γ", "recovery rate"],
+        "birth_rates": ["Ψ", "birth rate", "recruitment rate"]
+      }
+    },
+    "validation_rules": {
+      "Inflow": "The inflow to a compartment which doesn't have a source, example Recuirment or Birth etc.. are not supported by our model so you need to skip them or flag a error in the comment",
+      "compartment_uniqueness": "Each (PrimaryName, SecondaryName) pair must be unique",
+      "index_consistency": "Target indices must reference existing compartments",
+      "rate_format": "All rates must be numeric (Strictly avoid using any symbols). Compute a final float numeric value and not a equation.",
+      "terminal_compartments": "Terminal compartments have no outgoing flows"
+    }
+  }
+}
+
+********************************************************************************
+RESPONSE:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Susceptible">
+    <outgoingFlows rate="0.0276" target="//@compartments.1"/>
+    <outgoingFlows rate="0.0031" target="//@compartments.2"/>
+  </compartments>
+  <compartments PrimaryName="Exposed">
+    <outgoingFlows rate="0.4" target="//@compartments.3"/>
+  </compartments>
+  <compartments PrimaryName="Exposed" SecondaryName="quarantined">
+    <outgoingFlows rate="0.4" target="//@compartments.4"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic">
+    <outgoingFlows rate="0.97" target="//@compartments.5"/>
+    <outgoingFlows rate="0.03" target="//@compartments.6"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="presymptomatic, isolated">
+    <outgoingFlows rate="0.97" target="//@compartments.7"/>
+    <outgoingFlows rate="0.03" target="//@compartments.8"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate">
+    <outgoingFlows rate="0.4" target="//@compartments.10"/>
+    <outgoingFlows rate="0.167" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe">
+    <outgoingFlows rate="0.167" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="severe, isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="Infectious" SecondaryName="mild to moderate, isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Isolated">
+    <outgoingFlows rate="0.167" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital">
+    <outgoingFlows rate="0.1" target="//@compartments.14"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="pre-ICU">
+    <outgoingFlows rate="0.087" target="//@compartments.12"/>
+  </compartments>
+  <compartments PrimaryName="ICU">
+    <outgoingFlows rate="0.0095" target="//@compartments.15"/>
+    <outgoingFlows rate="0.038" target="//@compartments.13"/>
+  </compartments>
+  <compartments PrimaryName="Admitted to hospital" SecondaryName="post-ICU">
+    <outgoingFlows rate="0.048" target="//@compartments.14"/>
+  </compartments>
+</seir:SEIRModel>
+```

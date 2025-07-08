@@ -1,0 +1,344 @@
+LLM1 PROMPT:
+
+You are an expert in XML structure generation for epidemiological models.
+
+Your task is to generate a structurally correct SEIR model in XML format using the provided **model diagram (image)** and **language specification/metamodel**.
+
+You must:
+- Focus ONLY on generating compartment and flow structure.
+- DO NOT attempt to calculate or insert any numeric rate values.
+- Instead, use a placeholder `[[rate_missing]]` for all `rate` attributes that require computation later.
+- Use 0-based indexing for compartments in the order they appear (top-down, left-to-right).
+- Follow the metamodel strictly for element names, attributes, and nesting.
+- Include all compartments and their directional flows shown in the diagram.
+
+Inputs:
+- model_diagram (image): Shows compartments and directional transitions.
+- language_specification (text): Defines the structure and rules for valid SEIR XML.
+
+Output:
+- Only the final XML file. Do not include explanations or markdown formatting.
+- Ensure all required attributes are present and validate against the provided metamodel.
+
+********************************************************************************
+METAMODEL, USER INPUT AND IMAGE
+********************************************************************************
+LLM1 RESPONSE:
+ ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Recruitment_HomosexualMen" SecondaryName="Homosexual Men">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.3"/>
+  </compartments>
+  <compartments PrimaryName="Recruitment_Women" SecondaryName="Women">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.4"/>
+  </compartments>
+  <compartments PrimaryName="Recruitment_HeterosexualMen" SecondaryName="Heterosexual Men">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.5"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_HomosexualMen" SecondaryName="Homosexual Men">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.6"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_Women" SecondaryName="Women">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.7"/>
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.7"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_HeterosexualMen" SecondaryName="Heterosexual Men">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.8"/>
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.8"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_HomosexualMen" SecondaryName="Homosexual Men">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.9"/>
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_Women" SecondaryName="Women">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.9"/>
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_HeterosexualMen" SecondaryName="Heterosexual Men">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.9"/>
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="TreatedWithART" SecondaryName="Shared">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="PeopleLivingWithAIDS" SecondaryName="Shared">
+    <outgoingFlows rate="[[rate_missing]]" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="DeathDueToAIDS" SecondaryName="Terminal"/>
+  <compartments PrimaryName="NaturalDeath" SecondaryName="Terminal"/>
+</seir:SEIRModel>
+```
+********************************************************************************
+LLM2 PROMPT:
+
+You are an expert at interpreting epidemiological equations and inserting computed rates into XML model files.
+
+You are given:
+1. A partially completed SEIR XML file, where all rate fields are marked as [[rate_missing]].
+2. A user_input section that includes all relevant parameter values, formulas, and population data.
+
+YOUR TASK:
+1. Identify each [[rate_missing]] inside an <outgoingFlows> tag.
+2. Use the description and flow direction (source → target) to determine which rate formula applies.
+3. Compute the rate using the correct formula and values:
+  - For contact-based flows, convert to a rate using population values.
+  - Substitute variables directly from the data.
+  - Never assume missing values unless they are explicitly derivable.
+4. Before writing the rate, first add a detailed comment explaining your full reasoning.
+5. Then insert the final computed value as the rate.
+
+IMPORTANT RULES:
+- Do not round — use full numerical precision at all times.
+- Do not modify the XML structure or tags.
+- If a rate cannot be computed (due to missing data), leave a clear comment:
+    `<!-- missing due to undefined variable: βm -->`
+
+How to Write Reasoning (Baby-Step Style):
+  For each <outgoingFlows> you process:
+    First, add a full step-by-step comment above the rate:
+      - Use simple language, no skipped math
+      - Treat it like teaching someone new to equations
+      - Explain each substitution and operation clearly
+      - Then, insert the rate based on that computation.
+  Example:
+
+        <!-- We are using the formula: a × b × (c - 1)
+             Step 1: a = 2
+             Step 2: b = 3
+             Step 3: c = 4, so (c - 1) = 3
+             Step 4: Multiply: 2 × 3 = 6
+             Step 5: Then: 6 × 3 = 18
+             Therefore, the rate is 18 -->
+      <outgoingFlows rate="18" target="//@compartments.3">
+      </outgoingFlows>
+
+
+Final Note: Your only task is to calculate and insert correct rate values. Please Do not add, remove, or reorder compartments or flows. Also don't change the target parameter in any ongoingrate tag.
+
+********************************************************************************
+USER INPUT:
+
+| Index | Compartment                        | Subgroup         |
+| ----- | ---------------------------------- | ---------------- |
+| 0     | Recruitment_HomosexualMen          | Homosexual Men   |
+| 1     | Recruitment_Women                  | Women            |
+| 2     | Recruitment_HeterosexualMen        | Heterosexual Men |
+| 3     | Susceptible_HomosexualMen          | Homosexual Men   |
+| 4     | Susceptible_Women                  | Women            |
+| 5     | Susceptible_HeterosexualMen        | Heterosexual Men |
+| 6     | UntreatedInfected_HomosexualMen    | Homosexual Men   |
+| 7     | UntreatedInfected_Women            | Women            |
+| 8     | UntreatedInfected_HeterosexualMen  | Heterosexual Men |
+| 9     | TreatedWithART                     | Shared           |
+| 10    | PeopleLivingWithAIDS               | Shared           |
+| 11    | DeathDueToAIDS                     | Terminal         |
+| 12    | NaturalDeath                       | Terminal         |
+
+
+| Flow (From → To)                                            | Rate Variable   |
+| ----------------------------------------------------------- | --------------- |
+| Recruitment_HomosexualMen → Susceptible_HomosexualMen       | Ψ × θ × (1 − γ) |
+| Recruitment_Women → Susceptible_Women                       | Ψ × (1 − θ)     |
+| Recruitment_HeterosexualMen → Susceptible_HeterosexualMen   | Ψ × θ × γ       |
+| Susceptible_HomosexualMen → UntreatedInfected_HomosexualMen  | λh              |
+| Susceptible_Women → UntreatedInfected_Women    (homosexual men and women)              | λhw         |
+| Susceptible_Women → UntreatedInfected_Women  (Heterosexual)                | λm         |
+| Susceptible_HeterosexualMen → UntreatedInfected_HeterosexualMen (homosexual men and heterosexual) | λhm         |
+| Susceptible_HeterosexualMen → UntreatedInfected_HeterosexualMen  (heterosexual) | λw      |
+| UntreatedInfected_HomosexualMen → TreatedWithART                          | α × p           |
+| UntreatedInfected_Women → TreatedWithART                          | α × p           |
+| UntreatedInfected_HeterosexualMen → TreatedWithART                          | α × p           |
+| UntreatedInfected_HomosexualMen → PeopleLivingWithAIDS                    | α × (1 − p)     |
+| UntreatedInfected_Women → PeopleLivingWithAIDS                    | α × (1 − p)     |
+| UntreatedInfected_HeterosexualMen → PeopleLivingWithAIDS                    | α × (1 − p)     |
+| TreatedWithART → PeopleLivingWithAIDS                       | δ               |
+| PeopleLivingWithAIDS → DeathDueToAIDS                       | d               |
+| All states → NaturalDeath                                   | μ               |
+
+lamda flow equations:
+λh = βh * ch * (Ih / (Sh + Ih))
+λhw = βhw * Chw * (Ih / (Sm + Sh + Im + Ih))
+λhm = βhm * Chm * (Ih / (Sm + Sh + Im + Ih))
+λm = βs * cs * (Iw / (Sw + Iw))
+λw = βs * cs * (Im / (Sm + Im)) 
+
+Data of all the parameters is as follows(only use the necceassary values):
+Ψ	333	
+θ	0.48	
+γ	0.92	
+p	0.90	
+μ	0.0129	
+d	0.3333	
+δ	0.018	
+α	0.3333	
+βs	0.02	
+βh	0.44	
+βhw	0.018	
+βhm	0.25	
+cs	4	
+ch	7	
+Chw	2	
+Chm	1	
+
+Populations parameters are(only use the necceassary values):
+Sℎ	=2⁢4⁢4⁢6,	𝐼ℎ	=7⁢9,	𝑆𝑤	=1⁢8⁢9⁢9⁢9⁢4,	𝐼𝑤	=6,
+𝑆𝑚	=1⁢7⁢1⁢1⁢7⁢3,	𝐼𝑚	=2⁢9,	𝑇	=1⁢0⁢7,	𝐴	=4⁢7.
+
+
+********************************************************************************
+LLM2'S RESPONSE:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<seir:SEIRModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:seir="http://example.com/seirmodel">
+  <compartments PrimaryName="Recruitment_HomosexualMen" SecondaryName="Homosexual Men">
+    <!-- We are using the formula: Ψ × θ × (1 − γ)
+         Step 1: Ψ = 333
+         Step 2: θ = 0.48
+         Step 3: γ = 0.92, so (1 − γ) = 0.08
+         Step 4: Multiply: 333 × 0.48 = 159.84
+         Step 5: Then: 159.84 × 0.08 = 12.7872
+         Therefore, the rate is 12.7872 -->
+    <outgoingFlows rate="12.7872" target="//@compartments.3"/>
+  </compartments>
+  <compartments PrimaryName="Recruitment_Women" SecondaryName="Women">
+    <!-- We are using the formula: Ψ × (1 − θ)
+         Step 1: Ψ = 333
+         Step 2: θ = 0.48, so (1 − θ) = 0.52
+         Step 3: Multiply: 333 × 0.52 = 173.16
+         Therefore, the rate is 173.16 -->
+    <outgoingFlows rate="173.16" target="//@compartments.4"/>
+  </compartments>
+  <compartments PrimaryName="Recruitment_HeterosexualMen" SecondaryName="Heterosexual Men">
+    <!-- We are using the formula: Ψ × θ × γ
+         Step 1: Ψ = 333
+         Step 2: θ = 0.48
+         Step 3: γ = 0.92
+         Step 4: Multiply: 333 × 0.48 = 159.84
+         Step 5: Then: 159.84 × 0.92 = 146.0528
+         Therefore, the rate is 146.0528 -->
+    <outgoingFlows rate="146.0528" target="//@compartments.5"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_HomosexualMen" SecondaryName="Homosexual Men">
+    <!-- We are using the formula: λh = βh * ch * (Ih / (Sh + Ih))
+         Step 1: βh = 0.44
+         Step 2: ch = 7
+         Step 3: Ih = 79
+         Step 4: Sh = 2446
+         Step 5: (Sh + Ih) = 2446 + 79 = 2525
+         Step 6: (Ih / (Sh + Ih)) = 79 / 2525 = 0.03127388535031274
+         Step 7: Multiply: 0.44 × 7 = 3.08
+         Step 8: Then: 3.08 × 0.03127388535031274 = 0.0962639593929393
+         Therefore, the rate is 0.0962639593929393 -->
+    <outgoingFlows rate="0.0962639593929393" target="//@compartments.6"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_Women" SecondaryName="Women">
+    <!-- We are using the formula: λhw = βhw * Chw * (Ih / (Sm + Sh + Im + Ih))
+         Step 1: βhw = 0.018
+         Step 2: Chw = 2
+         Step 3: Ih = 79
+         Step 4: Sm = 171173
+         Step 5: Sh = 2446
+         Step 6: Im = 29
+         Step 7: (Sm + Sh + Im + Ih) = 171173 + 2446 + 29 + 79 = 173727
+         Step 8: (Ih / (Sm + Sh + Im + Ih)) = 79 / 173727 = 0.000454247026613716
+         Step 9: Multiply: 0.018 × 2 = 0.036
+         Step 10: Then: 0.036 × 0.000454247026613716 = 0.00001635289295689378
+         Therefore, the rate is 0.00001635289295689378 -->
+    <outgoingFlows rate="0.00001635289295689378" target="//@compartments.7"/>
+    <!-- We are using the formula: λm = βs * cs * (Iw / (Sw + Iw))
+         Step 1: βs = 0.02
+         Step 2: cs = 4
+         Step 3: Iw = 6
+         Step 4: Sw = 189994
+         Step 5: (Sw + Iw) = 189994 + 6 = 190000
+         Step 6: (Iw / (Sw + Iw)) = 6 / 190000 = 3.157894736842105e-05
+         Step 7: Multiply: 0.02 × 4 = 0.08
+         Step 8: Then: 0.08 × 3.157894736842105e-05 = 0.000002526315789473684
+         Therefore, the rate is 0.000002526315789473684 -->
+    <outgoingFlows rate="0.000002526315789473684" target="//@compartments.7"/>
+  </compartments>
+  <compartments PrimaryName="Susceptible_HeterosexualMen" SecondaryName="Heterosexual Men">
+    <!-- We are using the formula: λhm = βhm * Chm * (Ih / (Sm + Sh + Im + Ih))
+         Step 1: βhm = 0.25
+         Step 2: Chm = 1
+         Step 3: Ih = 79
+         Step 4: Sm = 171173
+         Step 5: Sh = 2446
+         Step 6: Im = 29
+         Step 7: (Sm + Sh + Im + Ih) = 171173 + 2446 + 29 + 79 = 173727
+         Step 8: (Ih / (Sm + Sh + Im + Ih)) = 79 / 173727 = 0.000454247026613716
+         Step 9: Multiply: 0.25 × 1 = 0.25
+         Step 10: Then: 0.25 × 0.000454247026613716 = 0.000113561756653429
+         Therefore, the rate is 0.000113561756653429 -->
+    <outgoingFlows rate="0.000113561756653429" target="//@compartments.8"/>
+    <!-- We are using the formula: λw = βs * cs * (Im / (Sm + Im))
+         Step 1: βs = 0.02
+         Step 2: cs = 4
+         Step 3: Im = 29
+         Step 4: Sm = 171173
+         Step 5: (Sm + Im) = 171173 + 29 = 171202
+         Step 6: (Im / (Sm + Im)) = 29 / 171202 = 0.0001693689613554616
+         Step 7: Multiply: 0.02 × 4 = 0.08
+         Step 8: Then: 0.08 × 0.0001693689613554616 = 0.00001354951690843693
+         Therefore, the rate is 0.00001354951690843693 -->
+    <outgoingFlows rate="0.00001354951690843693" target="//@compartments.8"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_HomosexualMen" SecondaryName="Homosexual Men">
+    <!-- We are using the formula: α × p
+         Step 1: α = 0.3333
+         Step 2: p = 0.9
+         Step 3: Multiply: 0.3333 × 0.9 = 0.3
+         Therefore, the rate is 0.3 -->
+    <outgoingFlows rate="0.3" target="//@compartments.9"/>
+    <!-- We are using the formula: α × (1 − p)
+         Step 1: α = 0.3333
+         Step 2: p = 0.9, so (1 − p) = 0.1
+         Step 3: Multiply: 0.3333 × 0.1 = 0.03333
+         Therefore, the rate is 0.03333 -->
+    <outgoingFlows rate="0.03333" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_Women" SecondaryName="Women">
+    <!-- We are using the formula: α × p
+         Step 1: α = 0.3333
+         Step 2: p = 0.9
+         Step 3: Multiply: 0.3333 × 0.9 = 0.3
+         Therefore, the rate is 0.3 -->
+    <outgoingFlows rate="0.3" target="//@compartments.9"/>
+    <!-- We are using the formula: α × (1 − p)
+         Step 1: α = 0.3333
+         Step 2: p = 0.9, so (1 − p) = 0.1
+         Step 3: Multiply: 0.3333 × 0.1 = 0.03333
+         Therefore, the rate is 0.03333 -->
+    <outgoingFlows rate="0.03333" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="UntreatedInfected_HeterosexualMen" SecondaryName="Heterosexual Men">
+    <!-- We are using the formula: α × p
+         Step 1: α = 0.3333
+         Step 2: p = 0.9
+         Step 3: Multiply: 0.3333 × 0.9 = 0.3
+         Therefore, the rate is 0.3 -->
+    <outgoingFlows rate="0.3" target="//@compartments.9"/>
+    <!-- We are using the formula: α × (1 − p)
+         Step 1: α = 0.3333
+         Step 2: p = 0.9, so (1 − p) = 0.1
+         Step 3: Multiply: 0.3333 × 0.1 = 0.03333
+         Therefore, the rate is 0.03333 -->
+    <outgoingFlows rate="0.03333" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="TreatedWithART" SecondaryName="Shared">
+    <!-- We are using the formula: δ
+         Step 1: δ = 0.018
+         Therefore, the rate is 0.018 -->
+    <outgoingFlows rate="0.018" target="//@compartments.10"/>
+  </compartments>
+  <compartments PrimaryName="PeopleLivingWithAIDS" SecondaryName="Shared">
+    <!-- We are using the formula: d
+         Step 1: d = 0.3333
+         Therefore, the rate is 0.3333 -->
+    <outgoingFlows rate="0.3333" target="//@compartments.11"/>
+  </compartments>
+  <compartments PrimaryName="DeathDueToAIDS" SecondaryName="Terminal"/>
+  <compartments PrimaryName="NaturalDeath" SecondaryName="Terminal"/>
+</seir:SEIRModel>
+```
